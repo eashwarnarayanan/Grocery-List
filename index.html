@@ -1,133 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FreshBasket 🛒 — Real-Time Grocery Tracker</title>
-  <link rel="stylesheet" href="styles.css">
-  <!-- Google Font -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Grocery List</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="background-decor blob-1"></div>
-  <div class="background-decor blob-2"></div>
 
-  <div class="container">
-    <!-- Top Header -->
-    <header class="app-header">
-      <div class="header-left">
-        <div class="logo-wrapper">
-          <span class="logo-emoji">🛍️</span>
-          <i data-lucide="shopping-bag" class="logo-icon"></i>
+  <!-- AUTHENTICATION MODAL -->
+  <div id="authModal" class="auth-overlay">
+    <div class="auth-card">
+      <div class="logo-badge">🛒</div>
+      <h2>Welcome Back</h2>
+      <p class="auth-sub">Sign in to sync your grocery list</p>
+      
+      <form id="authForm">
+        <div class="form-group">
+          <label for="authUsername">Username</label>
+          <input type="text" id="authUsername" placeholder="Enter your name..." required />
         </div>
+        <div class="form-group">
+          <label for="authPassword">Password</label>
+          <input type="password" id="authPassword" placeholder="••••••••" required />
+        </div>
+        <button type="submit" class="btn-primary width-full">Sign In</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN APP CONTAINER -->
+  <div id="appContainer" class="app-wrapper hidden">
+    
+    <!-- NAVBAR -->
+    <header class="navbar">
+      <div class="brand">
+        <span class="brand-icon">🛒</span>
         <div>
-          <h1>FreshBasket <span class="badge">Live ⚡</span></h1>
-          <p class="subtitle">Shared real-time shopping list 🍓🥦</p>
+          <div class="brand-title">
+            Grocery List <span class="badge-live">LIVE</span>
+          </div>
+          <div class="brand-sub">Smart Auto-Categorised</div>
         </div>
       </div>
 
-      <!-- Action Controls: Share & Theme Switcher -->
-      <div class="header-controls">
-        <button id="themeToggleBtn" class="control-btn" title="Toggle Light/Dark Theme">
-          <i data-lucide="moon" id="themeIcon"></i>
-          <span id="themeLabel">Dark</span>
-        </button>
-        <button id="shareListBtn" class="control-btn share-btn" title="Share list with friends">
-          <i data-lucide="share-2"></i>
-          <span>Share</span>
-        </button>
+      <div class="nav-controls">
+        <span id="userGreeting" class="user-pill">👤 User</span>
+        <button id="themeToggleBtn" class="pill-btn">🌙 Dark</button>
+        <button id="shareBtn" class="pill-btn btn-purple">🔗 Share</button>
+        <button id="signOutBtn" class="pill-btn btn-danger">Sign Out</button>
       </div>
     </header>
 
-    <!-- SECTION 1: ADD & MANAGE ITEMS -->
-    <main id="sectionAdd" class="app-section active">
-      <div class="card card-gradient-1">
-        <div class="card-title">
-          <div class="title-icon-bg icon-purple">
-            <i data-lucide="plus-circle"></i>
-          </div>
-          <h2>Add Grocery Item 📝</h2>
-        </div>
-        <p class="input-hint">Type item & press <strong>Enter / Return</strong> to add</p>
-        <div class="form-grid">
-          <div class="input-wrapper">
-            <i data-lucide="shopping-cart" class="input-icon"></i>
-            <input type="text" id="itemInput" placeholder="Item name (e.g. Almond milk 🥛, Tortilla chips 🌽)..." autocomplete="off">
-          </div>
-          <div class="input-wrapper">
-            <i data-lucide="tag" class="input-icon"></i>
-            <input type="text" id="categoryInput" placeholder="Category (e.g. Dairy 🧀, Produce 🥦)..." autocomplete="off">
-          </div>
-        </div>
-      </div>
+    <!-- MAIN CONTAINER CARD -->
+    <main class="main-card">
+      
+      <!-- TAB NAVIGATION -->
+      <nav class="tab-bar">
+        <button class="tab-btn active" data-tab="active">
+          Active List <span id="itemCountBadge" class="badge-count">0</span>
+        </button>
+        <button class="tab-btn" data-tab="add">➕ Add Item</button>
+        <button class="tab-btn" data-tab="removed">🕒 Removed</button>
+      </nav>
 
-      <div class="card card-gradient-2">
-        <div class="card-title">
-          <div class="title-icon-bg icon-pink">
-            <i data-lucide="folder-plus"></i>
+      <!-- TAB 1: ACTIVE SHOPPING LIST -->
+      <section id="tab-active" class="tab-content active">
+        <div class="list-actions-bar">
+          <span class="sub-label">Shopping Items</span>
+          <div class="action-btn-group">
+            <button id="undoBtn" class="pill-btn" disabled>↩️ Undo</button>
+            <button id="redoBtn" class="pill-btn" disabled>↪️ Redo</button>
           </div>
-          <h2>Create Custom Category 🎨</h2>
-        </div>
-        <div class="form-grid inline-grid">
-          <div class="input-wrapper">
-            <i data-lucide="folder" class="input-icon"></i>
-            <input type="text" id="newCategoryInput" placeholder="New category name (e.g. BBQ 🔥)...">
-          </div>
-          <button id="createCategoryBtn" class="btn btn-secondary">
-            <i data-lucide="sparkles"></i> Create
-          </button>
         </div>
 
-        <div class="existing-categories-container">
-          <p class="pills-label">🏷️ Quick Select Categories:</p>
-          <div id="existingCategories" class="category-pills"></div>
+        <div id="shoppingListContainer">
+          <p class="empty-msg">Your shopping list is empty!</p>
         </div>
-      </div>
+      </section>
+
+      <!-- TAB 2: ADD ITEM FORM -->
+      <section id="tab-add" class="tab-content">
+        <h3 class="section-title">Add New Grocery Item</h3>
+        
+        <form id="addItemForm">
+          <div class="form-group">
+            <label for="itemName">Item Name</label>
+            <input type="text" id="itemName" placeholder="e.g. Puff pastry, Apples, Milk..." required autocomplete="off" />
+          </div>
+
+          <div class="form-group">
+            <label for="itemCategory">Category (Auto-detected or custom)</label>
+            <input type="text" id="itemCategory" placeholder="e.g. 🍞 Bakery" />
+          </div>
+
+          <p class="tip-text">💡 Quick select or type a custom category to teach the app!</p>
+
+          <!-- QUICK CATEGORY CHIPS -->
+          <div class="sub-label">Quick Categories</div>
+          <div id="quickCatChips" class="cat-chips">
+            <button type="button" class="chip" data-cat="🥦 Produce">🥦 Produce</button>
+            <button type="button" class="chip" data-cat="🧀 Dairy">🧀 Dairy</button>
+            <button type="button" class="chip" data-cat="🍞 Bakery">🍞 Bakery</button>
+            <button type="button" class="chip" data-cat="🥩 Meat & Seafood">🥩 Meat & Seafood</button>
+            <button type="button" class="chip" data-cat="🍿 Snacks">🍿 Snacks</button>
+            <button type="button" class="chip" data-cat="🥤 Drinks">🥤 Drinks</button>
+            <button type="button" class="chip" data-cat="❄️ Frozen">❄️ Frozen</button>
+            <button type="button" class="chip" data-cat="🧹 Household">🧹 Household</button>
+            <button type="button" class="chip" data-cat="🥫 Pantry">🥫 Pantry</button>
+            <button type="button" class="chip" data-cat="🇮🇳 Indian Store">🇮🇳 Indian Store</button>
+          </div>
+
+          <!-- CREATE CUSTOM CATEGORY -->
+          <div class="custom-cat-box">
+            <div class="sub-label">Add Custom Category Chip</div>
+            <div class="input-inline">
+              <input type="text" id="customCatInput" placeholder="e.g. 🐾 Pet Supplies" />
+              <button type="button" id="createCatBtn" class="btn-secondary">Add</button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary width-full" style="margin-top: 1.5rem;">Add to Grocery List</button>
+        </form>
+      </section>
+
+      <!-- TAB 3: REMOVED ITEMS HISTORY -->
+      <section id="tab-removed" class="tab-content">
+        <h3 class="section-title">Recently Removed & Bought Items</h3>
+        <div id="recentlyRemovedContainer">
+          <p class="empty-msg">No removed items yet.</p>
+        </div>
+      </section>
+
     </main>
-
-    <!-- SECTION 2: ACTIVE GROCERY LIST -->
-    <main id="sectionList" class="app-section">
-      <div class="section-title">
-        <h2>Active Shopping List 🛒</h2>
-      </div>
-      <div id="groceryList" class="grocery-list-container"></div>
-    </main>
-
-    <!-- SECTION 3: RECENTLY REMOVED ARCHIVE -->
-    <main id="sectionRemoved" class="app-section">
-      <div class="card archive-card">
-        <div class="card-title">
-          <div class="title-icon-bg icon-gray">
-            <i data-lucide="history"></i>
-          </div>
-          <h2>Recently Removed / Ticked Off 🕰️</h2>
-        </div>
-        <div id="removedList" class="removed-items-container"></div>
-      </div>
-    </main>
-
-    <!-- BOTTOM NAVIGATION -->
-    <nav class="bottom-nav">
-      <button id="navAddBtn" class="nav-tab active">
-        <i data-lucide="plus-circle"></i>
-        <span>Add Items</span>
-      </button>
-      <button id="navListBtn" class="nav-tab">
-        <i data-lucide="list-checks"></i>
-        <span>Grocery List</span>
-      </button>
-      <button id="navRemovedBtn" class="nav-tab">
-        <i data-lucide="history"></i>
-        <span>Removed Items</span>
-      </button>
-    </nav>
   </div>
 
-  <!-- Firebase Modular SDKs -->
-  <script type="module" src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
