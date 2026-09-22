@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FreshBasket 🛒 — Smart Grocery Tracker</title>
+  <title>FreshBasket 🛒 — Real-Time Grocery Tracker</title>
   <link rel="stylesheet" href="styles.css">
   <!-- Google Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,15 +17,29 @@
   <div class="background-decor blob-2"></div>
 
   <div class="container">
-    <!-- Header -->
+    <!-- Top Header -->
     <header class="app-header">
-      <div class="logo-wrapper">
-        <span class="logo-emoji">🛍️</span>
-        <i data-lucide="shopping-bag" class="logo-icon"></i>
+      <div class="header-left">
+        <div class="logo-wrapper">
+          <span class="logo-emoji">🛍️</span>
+          <i data-lucide="shopping-bag" class="logo-icon"></i>
+        </div>
+        <div>
+          <h1>FreshBasket <span class="badge">Live ⚡</span></h1>
+          <p class="subtitle">Shared real-time shopping list 🍓🥦</p>
+        </div>
       </div>
-      <div>
-        <h1>FreshBasket <span class="badge">v3.0 ✨</span></h1>
-        <p class="subtitle">Your smart grocery & shopping companion 🍓🥦</p>
+
+      <!-- Action Controls: Share & Theme Switcher -->
+      <div class="header-controls">
+        <button id="themeToggleBtn" class="control-btn" title="Toggle Light/Dark Theme">
+          <i data-lucide="moon" id="themeIcon"></i>
+          <span id="themeLabel">Dark</span>
+        </button>
+        <button id="shareListBtn" class="control-btn share-btn" title="Share list with friends">
+          <i data-lucide="share-2"></i>
+          <span>Share</span>
+        </button>
       </div>
     </header>
 
@@ -38,6 +52,7 @@
           </div>
           <h2>Add Grocery Item 📝</h2>
         </div>
+        <p class="input-hint">Type item & press <strong>Enter / Return</strong> to add</p>
         <div class="form-grid">
           <div class="input-wrapper">
             <i data-lucide="shopping-cart" class="input-icon"></i>
@@ -47,9 +62,6 @@
             <i data-lucide="tag" class="input-icon"></i>
             <input type="text" id="categoryInput" placeholder="Category (e.g. Dairy 🧀, Produce 🥦)..." autocomplete="off">
           </div>
-          <button id="addItemBtn" class="btn btn-primary">
-            <i data-lucide="plus"></i> Add Item
-          </button>
         </div>
       </div>
 
@@ -98,7 +110,7 @@
       </div>
     </main>
 
-    <!-- BOTTOM NAVIGATION SUB-SECTIONS -->
+    <!-- BOTTOM NAVIGATION -->
     <nav class="bottom-nav">
       <button id="navAddBtn" class="nav-tab active">
         <i data-lucide="plus-circle"></i>
@@ -115,6 +127,7 @@
     </nav>
   </div>
 
-  <script src="script.js"></script>
+  <!-- Firebase Modular SDKs -->
+  <script type="module" src="script.js"></script>
 </body>
 </html>
