@@ -1,465 +1,495 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+// DEFAULT CATEGORY MAP
+const categoryDictionary = {
+  // Produce
+  apple: "🥦 Produce",
+  apples: "🥦 Produce",
+  banana: "🥦 Produce",
+  bananas: "🥦 Produce",
+  orange: "🥦 Produce",
+  oranges: "🥦 Produce",
+  tomato: "🥦 Produce",
+  tomatoes: "🥦 Produce",
+  potato: "🥦 Produce",
+  potatoes: "🥦 Produce",
+  onion: "🥦 Produce",
+  onions: "🥦 Produce",
+  lettuce: "🥦 Produce",
+  spinach: "🥦 Produce",
+  avocado: "🥦 Produce",
+  carrot: "🥦 Produce",
 
-// Firebase Public Configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyBDemoKeyForGroceryListApp2026",
-  authDomain: "freshbasket-app.firebaseapp.com",
-  projectId: "freshbasket-app",
-  storageBucket: "freshbasket-app.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:demo123456789"
+  // Dairy
+  milk: "🧀 Dairy",
+  cheese: "🧀 Dairy",
+  butter: "🧀 Dairy",
+  yogurt: "🧀 Dairy",
+  cream: "🧀 Dairy",
+
+  // Bakery
+  bread: "🍞 Bakery",
+  bagel: "🍞 Bakery",
+  croissant: "🍞 Bakery",
+  muffins: "🍞 Bakery",
+
+  // Meat & Seafood
+  chicken: "🥩 Meat & Seafood",
+  beef: "🥩 Meat & Seafood",
+  pork: "🥩 Meat & Seafood",
+  steak: "🥩 Meat & Seafood",
+  fish: "🥩 Meat & Seafood",
+  salmon: "🥩 Meat & Seafood",
+  shrimp: "🥩 Meat & Seafood",
+
+  // Snacks
+  chips: "🍿 Snacks",
+  popcorn: "🍿 Snacks",
+  chocolate: "🍿 Snacks",
+  candy: "🍿 Snacks",
+  cookies: "🍿 Snacks",
+  crackers: "🍿 Snacks",
+  nuts: "🍿 Snacks",
+
+  // Drinks
+  water: "🥤 Drinks",
+  juice: "🥤 Drinks",
+  soda: "🥤 Drinks",
+  coffee: "🥤 Drinks",
+  tea: "🥤 Drinks",
+  coke: "🥤 Drinks",
+
+  // Frozen
+  icecream: "❄️ Frozen",
+  pizza: "❄️ Frozen",
+  fries: "❄️ Frozen",
+  nuggets: "❄️ Frozen",
+
+  // Household
+  soap: "🧹 Household",
+  detergent: "🧹 Household",
+  "paper towel": "🧹 Household",
+  "toilet paper": "🧹 Household",
+  sponge: "🧹 Household",
+  cleaner: "🧹 Household",
+
+  // Pantry
+  rice: "🥫 Pantry",
+  pasta: "🥫 Pantry",
+  cereal: "🥫 Pantry",
+  flour: "🥫 Pantry",
+  sugar: "🥫 Pantry",
+  oil: "🥫 Pantry",
+  sauce: "🥫 Pantry",
+
+  // Indian Store
+  paneer: "🇮🇳 Indian Store",
+  atta: "🇮🇳 Indian Store",
+  ghee: "🇮🇳 Indian Store",
+  masala: "🇮🇳 Indian Store",
+  dal: "🇮🇳 Indian Store",
+  turmeric: "🇮🇳 Indian Store",
+  cumin: "🇮🇳 Indian Store"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+// LOAD LEARNED MAPPINGS FROM LOCAL STORAGE
+let learnedCategories = JSON.parse(localStorage.getItem("learnedCategories")) || {};
 
-// Get Session ID from URL or generate a new shared room ID
-const urlParams = new URLSearchParams(window.location.search);
-let listId = urlParams.get("list");
-if (!listId) {
-  listId = "family-" + Math.random().toString(36).substring(2, 8);
-  window.history.replaceState({}, "", `?list=${listId}`);
-}
+// STATE MANAGEMENT
+let currentUser = null;
+let shoppingList = [];
+let recentlyRemoved = [];
 
-const listDocRef = doc(db, "grocery_lists", listId);
+// UNDO / REDO HISTORY STACKS
+let undoStack = [];
+let redoStack = [];
 
-// Added "🇮🇳 Indian Store" to default categories
-const defaultCategories = [
-  "🥦 Produce", "🧀 Dairy", "🍞 Bakery", "🥩 Meat & Seafood",
-  "🍿 Snacks", "🥤 Drinks", "❄️ Frozen", "🧹 Household", "🥫 Pantry", "🇮🇳 Indian Store"
-];
+// GLOBAL TICKER FOR COUNTDOWNS & RELATIVE TIMES
+let globalInterval = null;
 
-const autoCategoryMap = {
-  "apple": "🥦 Produce", "apples": "🥦 Produce", "banana": "🥦 Produce", "bananas": "🥦 Produce",
-  "orange": "🥦 Produce", "oranges": "🥦 Produce", "berry": "🥦 Produce", "berries": "🥦 Produce",
-  "strawberry": "🥦 Produce", "blueberry": "🥦 Produce", "raspberry": "🥦 Produce",
-  "lettuce": "🥦 Produce", "tomato": "🥦 Produce", "tomatoes": "🥦 Produce", "potato": "🥦 Produce",
-  "potatoes": "🥦 Produce", "onion": "🥦 Produce", "onions": "🥦 Produce", "carrot": "🥦 Produce",
-  "carrots": "🥦 Produce", "broccoli": "🥦 Produce", "spinach": "🥦 Produce", "avocado": "🥦 Produce",
-  "cucumber": "🥦 Produce", "garlic": "🥦 Produce", "lemon": "🥦 Produce", "lime": "🥦 Produce",
+document.addEventListener("DOMContentLoaded", () => {
+  const authModal = document.getElementById("authModal");
+  const authForm = document.getElementById("authForm");
+  const appContainer = document.getElementById("appContainer");
+  const userGreeting = document.getElementById("userGreeting");
+  const signOutBtn = document.getElementById("signOutBtn");
+  const themeToggleBtn = document.getElementById("themeToggleBtn");
 
-  "milk": "🧀 Dairy", "cheese": "🧀 Dairy", "cheddar": "🧀 Dairy", "butter": "🧀 Dairy",
-  "yogurt": "🧀 Dairy", "cream": "🧀 Dairy", "egg": "🧀 Dairy", "eggs": "🧀 Dairy",
+  const itemNameInput = document.getElementById("itemName");
+  const itemCategoryInput = document.getElementById("itemCategory");
+  const addItemForm = document.getElementById("addItemForm");
+  const quickCatChips = document.getElementById("quickCatChips");
+  const customCatInput = document.getElementById("customCatInput");
+  const createCatBtn = document.getElementById("createCatBtn");
 
-  "bread": "🍞 Bakery", "bagel": "🍞 Bakery", "bagels": "🍞 Bakery", "croissant": "🍞 Bakery",
-  "tortilla": "🍞 Bakery", "tortillas": "🍞 Bakery", "buns": "🍞 Bakery", "muffin": "🍞 Bakery",
+  const shoppingListContainer = document.getElementById("shoppingListContainer");
+  const recentlyRemovedContainer = document.getElementById("recentlyRemovedContainer");
+  const itemCountBadge = document.getElementById("itemCountBadge");
 
-  "chicken": "🥩 Meat & Seafood", "beef": "🥩 Meat & Seafood", "pork": "🥩 Meat & Seafood",
-  "salmon": "🥩 Meat & Seafood", "fish": "🥩 Meat & Seafood", "steak": "🥩 Meat & Seafood",
-  "bacon": "🥩 Meat & Seafood", "sausage": "🥩 Meat & Seafood", "shrimp": "🥩 Meat & Seafood",
+  // UNDO & REDO BUTTON REFS
+  const undoBtn = document.getElementById("undoBtn");
+  const redoBtn = document.getElementById("redoBtn");
 
-  "chips": "🍿 Snacks", "popcorn": "🍿 Snacks", "nuts": "🍿 Snacks", "chocolate": "🍿 Snacks",
-  "cookie": "🍿 Snacks", "cookies": "🍿 Snacks", "cracker": "🍿 Snacks", "candy": "🍿 Snacks",
-
-  "water": "🥤 Drinks", "juice": "🥤 Drinks", "soda": "🥤 Drinks", "coffee": "🥤 Drinks",
-  "tea": "🥤 Drinks", "cola": "🥤 Drinks", "beer": "🥤 Drinks", "wine": "🥤 Drinks",
-
-  "ice cream": "❄️ Frozen", "pizza": "❄️ Frozen", "waffles": "❄️ Frozen", "frozen": "❄️ Frozen",
-
-  "soap": "🧹 Household", "paper towel": "🧹 Household", "tissue": "🧹 Household",
-  "detergent": "🧹 Household", "sponge": "🧹 Household", "cleaner": "🧹 Household",
-
-  "rice": "🥫 Pantry", "pasta": "🥫 Pantry", "spaghetti": "🥫 Pantry", "sauce": "🥫 Pantry",
-  "oil": "🥫 Pantry", "flour": "🥫 Pantry", "sugar": "🥫 Pantry", "salt": "🥫 Pantry"
-};
-
-const categorySuffixRules = [
-  { suffix: "milk", category: "🧀 Dairy" },
-  { suffix: "cheese", category: "🧀 Dairy" },
-  { suffix: "yogurt", category: "🧀 Dairy" },
-  { suffix: "juice", category: "🥤 Drinks" },
-  { suffix: "sauce", category: "🥫 Pantry" },
-  { suffix: "bread", category: "🍞 Bakery" },
-  { suffix: "chips", category: "🍿 Snacks" }
-];
-
-let state = {
-  categories: defaultCategories,
-  groceryItems: [],
-  removedItems: []
-};
-
-// UI Elements
-const itemInput = document.getElementById("itemInput");
-const categoryInput = document.getElementById("categoryInput");
-const newCategoryInput = document.getElementById("newCategoryInput");
-const createCategoryBtn = document.getElementById("createCategoryBtn");
-const groceryListContainer = document.getElementById("groceryList");
-const removedListContainer = document.getElementById("removedList");
-const themeToggleBtn = document.getElementById("themeToggleBtn");
-const themeIcon = document.getElementById("themeIcon");
-const themeLabel = document.getElementById("themeLabel");
-
-// Tab Navigation Elements
-const navAddBtn = document.getElementById("navAddBtn");
-const navListBtn = document.getElementById("navListBtn");
-const navRemovedBtn = document.getElementById("navRemovedBtn");
-const sectionAdd = document.getElementById("sectionAdd");
-const sectionList = document.getElementById("sectionList");
-const sectionRemoved = document.getElementById("sectionRemoved");
-
-function switchTab(activeBtn, activeSection) {
-  [navAddBtn, navListBtn, navRemovedBtn].forEach(btn => btn?.classList.remove("active"));
-  [sectionAdd, sectionList, sectionRemoved].forEach(sec => sec?.classList.remove("active"));
-
-  activeBtn?.classList.add("active");
-  activeSection?.classList.add("active");
-}
-
-navAddBtn?.addEventListener("click", () => switchTab(navAddBtn, sectionAdd));
-navListBtn?.addEventListener("click", () => switchTab(navListBtn, sectionList));
-navRemovedBtn?.addEventListener("click", () => switchTab(navRemovedBtn, sectionRemoved));
-
-// LIGHT / DARK MODE TOGGLE & AUTO SYSTEM DETECTION
-function applyTheme(theme) {
-  document.documentElement.setAttribute("data-theme", theme);
-  localStorage.setItem("fb_theme", theme);
-
-  if (theme === "dark") {
-    themeLabel.textContent = "Light";
-    themeIcon.setAttribute("data-lucide", "sun");
-  } else {
-    themeLabel.textContent = "Dark";
-    themeIcon.setAttribute("data-lucide", "moon");
+  // --- RECORD ACTION FOR UNDO/REDO ---
+  function recordAction(action) {
+    undoStack.push(action);
+    redoStack = []; // Clear redo stack on new action
+    updateUndoRedoButtons();
   }
-  if (window.lucide) lucide.createIcons();
-}
 
-function initTheme() {
-  const savedTheme = localStorage.getItem("fb_theme");
-  
-  if (savedTheme) {
-    applyTheme(savedTheme);
-  } else {
-    // Detect system device preference automatically
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    applyTheme(prefersDark ? "dark" : "light");
+  function updateUndoRedoButtons() {
+    if (undoBtn) undoBtn.disabled = undoStack.length === 0;
+    if (redoBtn) redoBtn.disabled = redoStack.length === 0;
   }
-}
 
-// Listen for system theme changes dynamically
-window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
-  if (!localStorage.getItem("fb_theme")) {
-    applyTheme(e.matches ? "dark" : "light");
-  }
-});
+  // --- UNDO & REDO CORE FUNCTIONS ---
+  window.undo = () => {
+    if (undoStack.length === 0) return;
+    const action = undoStack.pop();
 
-themeToggleBtn?.addEventListener("click", () => {
-  const currentTheme = document.documentElement.getAttribute("data-theme");
-  const newTheme = currentTheme === "dark" ? "light" : "dark";
-  applyTheme(newTheme);
-});
-
-// Share Button Logic
-document.getElementById("shareListBtn")?.addEventListener("click", () => {
-  navigator.clipboard.writeText(window.location.href);
-  alert("🔗 Room link copied to clipboard! Share it with your friend so you can edit the list together in real time.");
-});
-
-// Sync data to Cloud Firestore
-async function syncToCloud() {
-  try {
-    await setDoc(listDocRef, state, { merge: true });
-  } catch (err) {
-    console.warn("Firestore offline or sync delay:", err);
-  }
-}
-
-// Real-Time Cloud Listener
-onSnapshot(listDocRef, (docSnap) => {
-  if (docSnap.exists()) {
-    const data = docSnap.data();
-    state.categories = data.categories || defaultCategories;
-    
-    // Ensure "🇮🇳 Indian Store" exists in saved categories
-    if (!state.categories.includes("🇮🇳 Indian Store")) {
-      state.categories.push("🇮🇳 Indian Store");
+    if (action.type === "ADD") {
+      shoppingList = shoppingList.filter((item) => item.id !== action.item.id);
+    } else if (action.type === "REMOVE") {
+      shoppingList.splice(action.index, 0, action.item);
+      recentlyRemoved = recentlyRemoved.filter((item) => item.id !== action.item.id);
     }
 
-    state.groceryItems = data.groceryItems || [];
-    state.removedItems = data.removedItems || [];
-  } else {
-    syncToCloud();
-  }
-  renderAll();
-});
+    redoStack.push(action);
+    updateUndoRedoButtons();
+    renderLists();
+  };
 
-// Auto-Categorization on typing
-itemInput?.addEventListener("input", () => {
-  const text = itemInput.value.toLowerCase().trim();
-  if (!text) {
-    categoryInput.value = "";
-    return;
-  }
+  window.redo = () => {
+    if (redoStack.length === 0) return;
+    const action = redoStack.pop();
 
-  let detectedCategory = null;
-  const words = text.split(" ");
-  for (const word of words) {
-    if (autoCategoryMap[word]) {
-      detectedCategory = autoCategoryMap[word];
-      break;
-    }
-  }
-
-  if (!detectedCategory) {
-    for (const [key, cat] of Object.entries(autoCategoryMap)) {
-      if (text.includes(key)) {
-        detectedCategory = cat;
-        break;
+    if (action.type === "ADD") {
+      shoppingList.push(action.item);
+    } else if (action.type === "REMOVE") {
+      const index = shoppingList.findIndex((item) => item.id === action.item.id);
+      if (index !== -1) {
+        const [removed] = shoppingList.splice(index, 1);
+        removed.removedAt = Date.now();
+        recentlyRemoved.unshift(removed);
       }
     }
-  }
 
-  if (!detectedCategory) {
-    for (const rule of categorySuffixRules) {
-      if (text.endsWith(rule.suffix)) {
-        detectedCategory = rule.category;
-        break;
+    undoStack.push(action);
+    updateUndoRedoButtons();
+    renderLists();
+  };
+
+  if (undoBtn) undoBtn.addEventListener("click", window.undo);
+  if (redoBtn) redoBtn.addEventListener("click", window.redo);
+
+  // KEYBOARD SHORTCUTS FOR UNDO / REDO
+  document.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+      if (e.shiftKey) {
+        window.redo();
+      } else {
+        window.undo();
       }
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
+      window.redo();
     }
-  }
+  });
 
-  if (detectedCategory) {
-    categoryInput.value = detectedCategory;
-  }
-});
+  // --- 1. AUTHENTICATION (STRICT LOGIN CHECK) ---
+  if (authForm) {
+    authForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const usernameInput = document.getElementById("authUsername").value.trim();
+      const passwordInput = document.getElementById("authPassword").value.trim();
 
-function formatTimeAgo(timestamp) {
-  const diffInSeconds = Math.floor((Date.now() - timestamp) / 1000);
-  if (diffInSeconds < 60) return `${Math.max(1, diffInSeconds)}s ago`;
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  const remMinutes = diffInMinutes % 60;
-  if (diffInHours < 24) return `${diffInHours}hr ${remMinutes}m ago`;
-  return `${Math.floor(diffInHours / 24)}d ago`;
-}
-
-function renderCategoryOptions() {
-  const container = document.getElementById("existingCategories");
-  if (!container) return;
-  container.innerHTML = "";
-
-  state.categories.forEach(cat => {
-    const pill = document.createElement("span");
-    pill.className = "category-pill";
-    pill.textContent = cat;
-    pill.addEventListener("click", () => {
-      if (categoryInput) {
-        categoryInput.value = cat;
-        if (itemInput) itemInput.focus();
+      // VALIDATE EXACT CREDENTIALS
+      if (usernameInput === "ASWATHY" && passwordInput === "HARI") {
+        currentUser = usernameInput;
+        userGreeting.textContent = `👤 ${currentUser}`;
+        authModal.classList.add("hidden");
+        appContainer.classList.remove("hidden");
+      } else {
+        alert("Invalid Username or Password! Please try again.");
       }
     });
-    container.appendChild(pill);
-  });
-}
-
-function renderGroceryList() {
-  if (!groceryListContainer) return;
-  groceryListContainer.innerHTML = "";
-
-  if (state.groceryItems.length === 0) {
-    groceryListContainer.innerHTML = `
-      <div style="text-align: center; padding: 40px; color: var(--text-muted);">
-        <p style="font-size: 2.5rem; margin-bottom: 8px;">🛒</p>
-        <p style="font-weight: 700; font-size: 1.1rem;">Your shopping list is empty!</p>
-      </div>
-    `;
-    return;
   }
 
-  const grouped = {};
-  state.groceryItems.forEach(item => {
-    const cat = item.category || "📦 Other";
-    if (!grouped[cat]) grouped[cat] = [];
-    grouped[cat].push(item);
-  });
+  if (signOutBtn) {
+    signOutBtn.addEventListener("click", () => {
+      currentUser = null;
+      appContainer.classList.add("hidden");
+      authModal.classList.remove("hidden");
+      document.getElementById("authUsername").value = "";
+      document.getElementById("authPassword").value = "";
+    });
+  }
 
-  Object.keys(grouped).forEach(cat => {
-    const card = document.createElement("div");
-    card.className = "category-group-card";
+  // --- 2. GLOBAL TICKER ---
+  globalInterval = setInterval(() => {
+    let stateChanged = false;
 
-    const header = document.createElement("div");
-    header.className = "category-header";
-    header.innerHTML = `<span>${cat}</span> <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">${grouped[cat].length} item(s)</span>`;
-    card.appendChild(header);
+    for (let i = shoppingList.length - 1; i >= 0; i--) {
+      const item = shoppingList[i];
+      if (item.isRemoving) {
+        item.timeLeft -= 1;
+        stateChanged = true;
 
-    const ul = document.createElement("ul");
-    ul.className = "grocery-items-list";
-
-    grouped[cat].forEach(item => {
-      const li = document.createElement("li");
-      li.className = `grocery-item-row ${item.checked ? "checked" : ""}`;
-
-      const leftDiv = document.createElement("div");
-      leftDiv.className = "item-left";
-
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.className = "item-checkbox";
-      checkbox.checked = item.checked;
-
-      checkbox.addEventListener("change", () => {
-        item.checked = checkbox.checked;
-        if (item.checked) {
-          item.checkedAt = Date.now();
-        } else {
-          delete item.checkedAt;
+        if (item.timeLeft <= 0) {
+          const [removed] = shoppingList.splice(i, 1);
+          removed.removedAt = Date.now();
+          recentlyRemoved.unshift(removed);
         }
-        syncToCloud();
-      });
+      }
+    }
 
-      const span = document.createElement("span");
-      span.className = "item-text";
-      span.textContent = item.name;
+    if (stateChanged || recentlyRemoved.length > 0) {
+      renderLists();
+    }
+  }, 1000);
 
-      leftDiv.appendChild(checkbox);
-      leftDiv.appendChild(span);
-      li.appendChild(leftDiv);
+  // --- 3. RELATIVE TIME FORMATTER ---
+  function getRelativeTime(timestamp) {
+    const secondsAgo = Math.floor((Date.now() - timestamp) / 1000);
+    if (secondsAgo < 10) return "Just now";
+    if (secondsAgo < 60) return `${secondsAgo}s ago`;
+    const minutesAgo = Math.floor(secondsAgo / 60);
+    if (minutesAgo < 60) return `${minutesAgo}m ago`;
+    const hoursAgo = Math.floor(minutesAgo / 60);
+    return `${hoursAgo}h ago`;
+  }
 
-      if (item.checked && item.checkedAt) {
-        const remainingSec = Math.max(0, 60 - Math.floor((Date.now() - item.checkedAt) / 1000));
-        const timerSpan = document.createElement("span");
-        timerSpan.className = "timer-tag";
-        timerSpan.textContent = `⏱️ Removing in ${remainingSec}s`;
-        li.appendChild(timerSpan);
+  // --- 4. SMART AUTO-CATEGORISATION ---
+  if (itemNameInput) {
+    itemNameInput.addEventListener("input", (e) => {
+      const value = e.target.value.toLowerCase().trim();
+      if (!value) return;
+
+      let matchedCategory = "";
+
+      // Check learned custom mappings first
+      if (learnedCategories[value]) {
+        matchedCategory = learnedCategories[value];
+      } else {
+        for (const key in learnedCategories) {
+          if (value.includes(key)) {
+            matchedCategory = learnedCategories[key];
+            break;
+          }
+        }
       }
 
-      ul.appendChild(li);
+      // Fallback to default dictionary
+      if (!matchedCategory) {
+        for (const key in categoryDictionary) {
+          if (value.includes(key)) {
+            matchedCategory = categoryDictionary[key];
+            break;
+          }
+        }
+      }
+
+      if (matchedCategory && itemCategoryInput) {
+        itemCategoryInput.value = matchedCategory;
+      }
     });
-
-    card.appendChild(ul);
-    groceryListContainer.appendChild(card);
-  });
-}
-
-function renderRemovedList() {
-  if (!removedListContainer) return;
-  removedListContainer.innerHTML = "";
-
-  if (state.removedItems.length === 0) {
-    removedListContainer.innerHTML = `
-      <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; font-weight: 500; padding: 10px;">
-        No removed items yet.
-      </p>
-    `;
-    return;
   }
 
-  const ul = document.createElement("ul");
-  ul.className = "removed-items-list";
+  // --- 5. CATEGORY CHIPS & CUSTOM CREATION ---
+  if (quickCatChips) {
+    quickCatChips.addEventListener("click", (e) => {
+      if (e.target.classList.contains("chip") && itemCategoryInput) {
+        itemCategoryInput.value = e.target.dataset.cat;
+      }
+    });
+  }
 
-  [...state.removedItems].reverse().forEach(item => {
-    const li = document.createElement("li");
-    li.className = "removed-item-row";
+  if (createCatBtn) {
+    createCatBtn.addEventListener("click", () => {
+      const catName = customCatInput.value.trim();
+      if (catName) {
+        const newChip = document.createElement("button");
+        newChip.type = "button";
+        newChip.className = "chip";
+        newChip.dataset.cat = catName;
+        newChip.textContent = catName;
+        if (quickCatChips) quickCatChips.appendChild(newChip);
 
-    const leftDiv = document.createElement("div");
-    leftDiv.className = "item-left";
-    leftDiv.innerHTML = `<span style="font-size:0.85rem;">✅</span> <span class="item-text" style="text-decoration: line-through; color: var(--text-muted);">${item.name}</span> <span style="font-size:0.75rem; color: var(--text-muted);">(${item.category})</span>`;
+        if (itemCategoryInput) itemCategoryInput.value = catName;
+        customCatInput.value = "";
+      }
+    });
+  }
 
-    const timeSpan = document.createElement("span");
-    timeSpan.className = "time-ago-tag";
-    timeSpan.textContent = formatTimeAgo(item.removedAt);
+  // --- 6. ADD ITEM FORM ---
+  if (addItemForm) {
+    addItemForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = itemNameInput.value.trim();
+      const category = itemCategoryInput.value.trim() || "📦 General";
 
-    li.appendChild(leftDiv);
-    li.appendChild(timeSpan);
-    ul.appendChild(li);
-  });
+      if (name) {
+        // Learn item -> category association
+        const lowerName = name.toLowerCase();
+        learnedCategories[lowerName] = category;
+        localStorage.setItem("learnedCategories", JSON.stringify(learnedCategories));
 
-  removedListContainer.appendChild(ul);
-}
+        const newItem = {
+          id: Date.now(),
+          name: name,
+          category: category,
+          isRemoving: false,
+          timeLeft: 60
+        };
 
-function renderAll() {
-  renderCategoryOptions();
-  renderGroceryList();
-  renderRemovedList();
-  if (window.lucide) lucide.createIcons();
-}
+        shoppingList.push(newItem);
+        recordAction({ type: "ADD", item: newItem });
 
-// 1-second interval loop: handles 60s tick-off removal & timestamp refresh
-setInterval(() => {
-  const now = Date.now();
-  let updated = false;
+        itemNameInput.value = "";
+        itemCategoryInput.value = "";
 
-  state.groceryItems = state.groceryItems.filter(item => {
-    if (item.checked && item.checkedAt && (now - item.checkedAt >= 60000)) {
-      state.removedItems.push({
-        id: item.id,
-        name: item.name,
-        category: item.category,
-        removedAt: now
-      });
-      updated = true;
-      return false;
+        renderLists();
+      }
+    });
+  }
+
+  // --- 7. RENDER LISTS ---
+  function renderLists() {
+    if (itemCountBadge) {
+      itemCountBadge.textContent = shoppingList.length;
     }
-    return true;
+
+    if (shoppingListContainer) {
+      if (shoppingList.length === 0) {
+        shoppingListContainer.innerHTML = `<p class="empty-msg">Your shopping list is empty!</p>`;
+      } else {
+        const grouped = {};
+        shoppingList.forEach((item) => {
+          if (!grouped[item.category]) grouped[item.category] = [];
+          grouped[item.category].push(item);
+        });
+
+        let html = "";
+        for (const cat in grouped) {
+          html += `
+            <div class="category-group">
+              <div class="category-header">
+                <span>${cat}</span>
+                <span style="font-size:0.8rem; opacity:0.7;">${grouped[cat].length} item(s)</span>
+              </div>
+              ${grouped[cat]
+                .map((item) => {
+                  return `
+                    <div class="list-item ${item.isRemoving ? "item-checked" : ""}">
+                      <div class="item-left">
+                        <input type="checkbox" 
+                          ${item.isRemoving ? "checked" : ""} 
+                          onchange="window.toggleItemRemoval(${item.id})">
+                        <span>${item.name}</span>
+                      </div>
+                      ${
+                        item.isRemoving
+                          ? `<span class="badge-removing">🎯 Removing in ${item.timeLeft}s</span>`
+                          : `<button class="remove-btn" onclick="window.removeItemDirect(${item.id})">🗑️</button>`
+                      }
+                    </div>
+                  `;
+                })
+                .join("")}
+            </div>
+          `;
+        }
+        shoppingListContainer.innerHTML = html;
+      }
+    }
+
+    if (recentlyRemovedContainer) {
+      if (recentlyRemoved.length === 0) {
+        recentlyRemovedContainer.innerHTML = `<p class="empty-msg">No removed items yet.</p>`;
+      } else {
+        recentlyRemovedContainer.innerHTML = recentlyRemoved
+          .map(
+            (item) => `
+          <div class="list-item">
+            <div>
+              <span style="text-decoration: line-through; opacity: 0.7;">${item.name} (${item.category})</span>
+              <div class="bought-time">Bought ${getRelativeTime(item.removedAt)}</div>
+            </div>
+            <button class="pill-btn" onclick="window.restoreItem(${item.id})">Restore</button>
+          </div>
+        `
+          )
+          .join("");
+      }
+    }
+  }
+
+  // --- 8. ITEM ACTION HANDLERS ---
+  window.toggleItemRemoval = (id) => {
+    const item = shoppingList.find((i) => i.id === id);
+    if (item) {
+      item.isRemoving = !item.isRemoving;
+      if (item.isRemoving) {
+        item.timeLeft = 60;
+      }
+      renderLists();
+    }
+  };
+
+  window.removeItemDirect = (id) => {
+    const index = shoppingList.findIndex((i) => i.id === id);
+    if (index !== -1) {
+      const [removed] = shoppingList.splice(index, 1);
+      removed.removedAt = Date.now();
+      recentlyRemoved.unshift(removed);
+
+      recordAction({ type: "REMOVE", item: removed, index: index });
+      renderLists();
+    }
+  };
+
+  window.restoreItem = (id) => {
+    const index = recentlyRemoved.findIndex((item) => item.id === id);
+    if (index !== -1) {
+      const [restored] = recentlyRemoved.splice(index, 1);
+      restored.isRemoving = false;
+      restored.timeLeft = 60;
+      shoppingList.push(restored);
+      renderLists();
+    }
+  };
+
+  // --- 9. TABS ---
+  const tabBtns = document.querySelectorAll(".tab-btn");
+  const tabContents = document.querySelectorAll(".tab-content");
+
+  tabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      tabBtns.forEach((b) => b.classList.remove("active"));
+      tabContents.forEach((c) => c.classList.remove("active"));
+
+      btn.classList.add("active");
+      const targetTab = document.getElementById(`tab-${btn.dataset.tab}`);
+      if (targetTab) targetTab.classList.add("active");
+    });
   });
 
-  if (updated) {
-    syncToCloud();
-  } else {
-    renderGroceryList();
-    renderRemovedList();
-  }
-}, 1000);
-
-// Add item on Enter / Return keypress
-function handleAddItem() {
-  const name = itemInput.value.trim();
-  const category = categoryInput.value.trim() || "📦 Other";
-
-  if (!name) return;
-
-  state.groceryItems.push({
-    id: Date.now().toString(),
-    name: name,
-    category: category,
-    checked: false
-  });
-
-  if (category && !state.categories.includes(category)) {
-    state.categories.push(category);
+  // --- 10. THEME TOGGLE & SHARE ---
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener("click", () => {
+      const isDark = document.body.getAttribute("data-theme") === "dark";
+      if (isDark) {
+        document.body.removeAttribute("data-theme");
+        themeToggleBtn.textContent = "☀️ Light";
+      } else {
+        document.body.setAttribute("data-theme", "dark");
+        themeToggleBtn.textContent = "🌙 Dark";
+      }
+    });
   }
 
-  itemInput.value = "";
-  categoryInput.value = "";
-  syncToCloud();
-  switchTab(navListBtn, sectionList);
-}
-
-itemInput?.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    handleAddItem();
+  const shareBtn = document.getElementById("shareBtn");
+  if (shareBtn) {
+    shareBtn.addEventListener("click", () => {
+      navigator.clipboard.writeText(window.location.href);
+      alert("Share link copied to clipboard!");
+    });
   }
 });
-
-categoryInput?.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    handleAddItem();
-  }
-});
-
-createCategoryBtn?.addEventListener("click", () => {
-  const newCat = newCategoryInput.value.trim();
-  if (!newCat) return;
-
-  if (!state.categories.includes(newCat)) {
-    state.categories.push(newCat);
-    syncToCloud();
-  }
-
-  newCategoryInput.value = "";
-});
-
-newCategoryInput?.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    createCategoryBtn?.click();
-  }
-});
-
-// Initialize app & theme
-initTheme();
