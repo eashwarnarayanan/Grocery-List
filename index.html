@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FreshBasket 🛒 — Smart Grocery Tracker</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="background-decor blob-1"></div>
+  <div class="background-decor blob-2"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-wrapper">
+        <span class="logo-emoji">🛍️</span>
+        <i data-lucide="shopping-bag" class="logo-icon"></i>
+      </div>
+      <div>
+        <h1>FreshBasket <span class="badge">v3.0 ✨</span></h1>
+        <p class="subtitle">Your smart grocery & shopping companion 🍓🥦</p>
+      </div>
+    </header>
+
+    <!-- SECTION 1: ADD & MANAGE ITEMS -->
+    <main id="sectionAdd" class="app-section active">
+      <div class="card card-gradient-1">
+        <div class="card-title">
+          <div class="title-icon-bg icon-purple">
+            <i data-lucide="plus-circle"></i>
+          </div>
+          <h2>Add Grocery Item 📝</h2>
+        </div>
+        <div class="form-grid">
+          <div class="input-wrapper">
+            <i data-lucide="shopping-cart" class="input-icon"></i>
+            <input type="text" id="itemInput" placeholder="Item name (e.g. Almond milk 🥛, Tortilla chips 🌽)..." autocomplete="off">
+          </div>
+          <div class="input-wrapper">
+            <i data-lucide="tag" class="input-icon"></i>
+            <input type="text" id="categoryInput" placeholder="Category (e.g. Dairy 🧀, Produce 🥦)..." autocomplete="off">
+          </div>
+          <button id="addItemBtn" class="btn btn-primary">
+            <i data-lucide="plus"></i> Add Item
+          </button>
+        </div>
+      </div>
+
+      <div class="card card-gradient-2">
+        <div class="card-title">
+          <div class="title-icon-bg icon-pink">
+            <i data-lucide="folder-plus"></i>
+          </div>
+          <h2>Create Custom Category 🎨</h2>
+        </div>
+        <div class="form-grid inline-grid">
+          <div class="input-wrapper">
+            <i data-lucide="folder" class="input-icon"></i>
+            <input type="text" id="newCategoryInput" placeholder="New category name (e.g. BBQ 🔥)...">
+          </div>
+          <button id="createCategoryBtn" class="btn btn-secondary">
+            <i data-lucide="sparkles"></i> Create
+          </button>
+        </div>
+
+        <div class="existing-categories-container">
+          <p class="pills-label">🏷️ Quick Select Categories:</p>
+          <div id="existingCategories" class="category-pills"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- SECTION 2: ACTIVE GROCERY LIST -->
+    <main id="sectionList" class="app-section">
+      <div class="section-title">
+        <h2>Active Shopping List 🛒</h2>
+      </div>
+      <div id="groceryList" class="grocery-list-container"></div>
+    </main>
+
+    <!-- SECTION 3: RECENTLY REMOVED ARCHIVE -->
+    <main id="sectionRemoved" class="app-section">
+      <div class="card archive-card">
+        <div class="card-title">
+          <div class="title-icon-bg icon-gray">
+            <i data-lucide="history"></i>
+          </div>
+          <h2>Recently Removed / Ticked Off 🕰️</h2>
+        </div>
+        <div id="removedList" class="removed-items-container"></div>
+      </div>
+    </main>
+
+    <!-- BOTTOM NAVIGATION SUB-SECTIONS -->
+    <nav class="bottom-nav">
+      <button id="navAddBtn" class="nav-tab active">
+        <i data-lucide="plus-circle"></i>
+        <span>Add Items</span>
+      </button>
+      <button id="navListBtn" class="nav-tab">
+        <i data-lucide="list-checks"></i>
+        <span>Grocery List</span>
+      </button>
+      <button id="navRemovedBtn" class="nav-tab">
+        <i data-lucide="history"></i>
+        <span>Removed Items</span>
+      </button>
+    </nav>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
