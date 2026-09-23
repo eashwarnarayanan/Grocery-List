@@ -3,74 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Smart List Manager</title>
+  <title>Smart List</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-
-  <!-- Collapsible Side Drawer -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <button class="toggle-btn" id="toggleBtn" title="Toggle Sidebar">🛒</button>
-      <span class="brand-title">Smart List</span>
-    </div>
-
-    <ul class="nav-list">
-      <li class="nav-item active" id="navGrocery" onclick="switchList('Grocery List')">
-        <span class="nav-icon">📋</span>
-        <span class="nav-text">Grocery List</span>
-      </li>
-      <li class="nav-item" id="navCostco" onclick="switchList('Costco List')">
-        <span class="nav-icon">🏪</span>
-        <span class="nav-text">Costco List</span>
-      </li>
-      <li class="nav-item" id="navPantry" onclick="switchList('Pantry Inventory')">
-        <span class="nav-icon">🥫</span>
-        <span class="nav-text">Pantry Inventory</span>
-      </li>
-      <li class="nav-item" id="navRecipes" onclick="switchList('Recipe Planner')">
-        <span class="nav-icon">📖</span>
-        <span class="nav-text">Recipe Planner</span>
-      </li>
-    </ul>
-
-    <div class="sidebar-footer">
-      <div class="user-badge">
-        <div class="avatar">A</div>
-        <div class="user-details">
-          <span class="user-name">ASWATHY</span>
-          <span class="user-status">Pro Plan</span>
-        </div>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <h2>Smart List</h2>
       </div>
-    </div>
-  </aside>
-
-  <!-- Main View Container -->
-  <div class="main-wrapper">
-    
-    <!-- Top Header -->
-    <header class="top-header">
-      <div class="header-left">
-        <div class="header-title-group">
-          <h1 class="header-title" id="headerTitle">Grocery List</h1>
-          <span class="live-badge">LIVE</span>
-        </div>
-        <p class="sub-tagline">Smart Auto-Categorised Shopping Assistant</p>
+      <nav class="nav-menu">
+        <button class="nav-item active" id="navGrocery" onclick="switchList('Grocery List')">Grocery List</button>
+        <button class="nav-item" id="navCostco" onclick="switchList('Costco List')">Costco List</button>
+        <button class="nav-item" id="navPantry" onclick="switchList('Pantry Inventory')">Pantry Inventory</button>
+        <button class="nav-item" id="navRecipes" onclick="switchList('Recipe Planner')">Recipe Planner</button>
+      </nav>
+      <div class="user-plan">
+        <span>ASWATHY Pro Plan</span>
       </div>
-
-      <div class="top-actions">
-        <button class="btn-icon" title="Notifications">🔔</button>
-        <button class="btn-secondary" id="themeToggleBtn">🌙 Dark</button>
-        <button class="btn-primary-sm" onclick="shareList()">🔗 Share</button>
-        <button class="btn-danger-sm">Sign Out</button>
-      </div>
-    </header>
+    </aside>
 
     <!-- Main Content -->
-    <div class="app-container">
-      
-      <!-- Stats Summary -->
-      <div class="stats-grid">
+    <main class="main-content">
+      <header class="top-header">
+        <div>
+          <h1 id="headerTitle">Grocery List</h1>
+          <p class="subtitle">Smart Auto-Categorised Shopping Assistant</p>
+        </div>
+      </header>
+
+      <!-- Stats Bar -->
+      <section class="stats-bar">
         <div class="stat-card">
           <span class="stat-label">Total Items</span>
           <span class="stat-value" id="statTotal">0</span>
@@ -83,102 +47,11 @@
           <span class="stat-label">Categories</span>
           <span class="stat-value" id="statCategories">0</span>
         </div>
-      </div>
+      </section>
 
-      <div class="app-card">
-        
-        <!-- Tab Bar -->
-        <div class="tab-bar">
-          <div class="tab-group">
-            <button class="tab-btn active" id="tabActive" onclick="setTab('active')">
-              Active List <span class="count-pill" id="activeCount">0</span>
-            </button>
-            <button class="tab-btn" id="tabCompleted" onclick="setTab('completed')">
-              Completed <span class="count-pill" id="completedCount">0</span>
-            </button>
-            <button class="tab-btn" id="tabRemoved" onclick="setTab('removed')">
-              ⚪ Removed <span class="count-pill" id="removedCount">0</span>
-            </button>
-          </div>
+      <!-- Add Item Form -->
+      <section class="form-card">
+        <h3 id="formTitle">Add New Grocery Item</h3>
+        I can certainly help you write code, but you haven't mentioned what program or feature you want to build! 
 
-          <div class="history-controls">
-            <button class="btn-secondary" onclick="undoAction()">⤺ Undo</button>
-            <button class="btn-secondary" onclick="redoAction()">⤿ Redo</button>
-          </div>
-        </div>
-
-        <!-- Add Item Form -->
-        <div class="form-section">
-          <h2 class="form-title" id="formTitle">Add New Grocery Item</h2>
-
-          <div class="form-row">
-            <div class="form-group flex-2">
-              <label class="field-label" for="itemNameInput">ITEM NAME</label>
-              <input type="text" class="input-field" id="itemNameInput" placeholder="e.g. Puff pastry, Apples, Milk..." />
-            </div>
-
-            <div class="form-group flex-1">
-              <label class="field-label" for="quantityInput">QTY</label>
-              <input type="number" class="input-field" id="quantityInput" value="1" min="1" />
-            </div>
-
-            <div class="form-group flex-1">
-              <label class="field-label" for="unitSelect">UNIT</label>
-              <select class="input-field" id="unitSelect">
-                <option value="pcs">pcs</option>
-                <option value="kg">kg</option>
-                <option value="g">g</option>
-                <option value="L">L</option>
-                <option value="pack">pack</option>
-              </select>
-            </div>
-          </div>
-
-          <label class="field-label" for="categoryInput">CATEGORY (AUTO-DETECTED OR CUSTOM)</label>
-          <input type="text" class="input-field" id="categoryInput" placeholder="e.g. 🥐 Bakery" />
-
-          <div class="info-tip">
-            💡 Quick select or type a custom category to teach the app!
-          </div>
-
-          <label class="field-label">QUICK CATEGORIES</label>
-          <div class="chips-grid" id="chipsContainer">
-            <button class="chip" onclick="selectCategory('🥦 Produce')">🥦 Produce</button>
-            <button class="chip" onclick="selectCategory('🧀 Dairy')">🧀 Dairy</button>
-            <button class="chip" onclick="selectCategory('🥐 Bakery')">🥐 Bakery</button>
-            <button class="chip" onclick="selectCategory('🥩 Meat & Seafood')">🥩 Meat & Seafood</button>
-            <button class="chip" onclick="selectCategory('🍿 Snacks')">🍿 Snacks</button>
-            <button class="chip" onclick="selectCategory('🧃 Drinks')">🧃 Drinks</button>
-            <button class="chip" onclick="selectCategory('❄️ Frozen')">❄️ Frozen</button>
-            <button class="chip" onclick="selectCategory('🧹 Household')">🧹 Household</button>
-            <button class="chip" onclick="selectCategory('🥫 Pantry')">🥫 Pantry</button>
-            <button class="chip" onclick="selectCategory('🍛 Indian Store')">🍛 Indian Store</button>
-          </div>
-
-          <label class="field-label">ADD CUSTOM CATEGORY CHIP</label>
-          <div class="custom-category-box">
-            <input type="text" class="input-field" id="customChipInput" placeholder="e.g. 🐾 Pet Supplies" />
-            <button class="btn-secondary btn-inline" onclick="addCustomChip()">Add</button>
-          </div>
-
-          <button class="btn-submit" id="submitBtn" onclick="addItem()">Add to Grocery List</button>
-        </div>
-
-        <!-- Filter and Search Toolbar -->
-        <div class="list-toolbar">
-          <input type="text" class="input-field search-input" id="searchInput" placeholder="🔍 Search items..." oninput="renderList()" />
-          <select class="input-field filter-select" id="filterCategory" onchange="renderList()">
-            <option value="ALL">All Categories</option>
-          </select>
-        </div>
-
-        <!-- Displayed List Container -->
-        <ul class="items-list" id="itemsList"></ul>
-
-      </div>
-    </div>
-  </div>
-
-  <script src="script.js"></script>
-</body>
-</html>
+Please tell me what you're working on—such as a specific programming language, game, website layout, or script—and I'll provide the complete code for you.
