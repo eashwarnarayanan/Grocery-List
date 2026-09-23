@@ -62,4 +62,123 @@
         <button class="btn-icon" title="Notifications">🔔</button>
         <button class="btn-secondary" id="themeToggleBtn">🌙 Dark</button>
         <button class="btn-primary-sm" onclick="shareList()">🔗 Share</button>
-        <button class="btn-danger-sm">Could you please share what specific code or program you are looking for? Let me know the programming language or what you want the code to do, and I'll be happy to provide the complete solution for you.
+        <button class="btn-danger-sm">Sign Out</button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="app-container">
+      
+      <!-- Stats Summary -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">Total Items</span>
+          <span class="stat-value" id="statTotal">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Completed</span>
+          <span class="stat-value" id="statCompleted">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Categories</span>
+          <span class="stat-value" id="statCategories">0</span>
+        </div>
+      </div>
+
+      <div class="app-card">
+        
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+          <div class="tab-group">
+            <button class="tab-btn active" id="tabActive" onclick="setTab('active')">
+              Active List <span class="count-pill" id="activeCount">0</span>
+            </button>
+            <button class="tab-btn" id="tabCompleted" onclick="setTab('completed')">
+              Completed <span class="count-pill" id="completedCount">0</span>
+            </button>
+            <button class="tab-btn" id="tabRemoved" onclick="setTab('removed')">
+              ⚪ Removed <span class="count-pill" id="removedCount">0</span>
+            </button>
+          </div>
+
+          <div class="history-controls">
+            <button class="btn-secondary" onclick="undoAction()">⤺ Undo</button>
+            <button class="btn-secondary" onclick="redoAction()">⤿ Redo</button>
+          </div>
+        </div>
+
+        <!-- Add Item Form -->
+        <div class="form-section">
+          <h2 class="form-title" id="formTitle">Add New Grocery Item</h2>
+
+          <div class="form-row">
+            <div class="form-group flex-2">
+              <label class="field-label" for="itemNameInput">ITEM NAME</label>
+              <input type="text" class="input-field" id="itemNameInput" placeholder="e.g. Puff pastry, Apples, Milk..." />
+            </div>
+
+            <div class="form-group flex-1">
+              <label class="field-label" for="quantityInput">QTY</label>
+              <input type="number" class="input-field" id="quantityInput" value="1" min="1" />
+            </div>
+
+            <div class="form-group flex-1">
+              <label class="field-label" for="unitSelect">UNIT</label>
+              <select class="input-field" id="unitSelect">
+                <option value="pcs">pcs</option>
+                <option value="kg">kg</option>
+                <option value="g">g</option>
+                <option value="L">L</option>
+                <option value="pack">pack</option>
+              </select>
+            </div>
+          </div>
+
+          <label class="field-label" for="categoryInput">CATEGORY (AUTO-DETECTED OR CUSTOM)</label>
+          <input type="text" class="input-field" id="categoryInput" placeholder="e.g. 🥐 Bakery" />
+
+          <div class="info-tip">
+            💡 Quick select or type a custom category to teach the app!
+          </div>
+
+          <label class="field-label">QUICK CATEGORIES</label>
+          <div class="chips-grid" id="chipsContainer">
+            <button class="chip" onclick="selectCategory('🥦 Produce')">🥦 Produce</button>
+            <button class="chip" onclick="selectCategory('🧀 Dairy')">🧀 Dairy</button>
+            <button class="chip" onclick="selectCategory('🥐 Bakery')">🥐 Bakery</button>
+            <button class="chip" onclick="selectCategory('🥩 Meat & Seafood')">🥩 Meat & Seafood</button>
+            <button class="chip" onclick="selectCategory('🍿 Snacks')">🍿 Snacks</button>
+            <button class="chip" onclick="selectCategory('🧃 Drinks')">🧃 Drinks</button>
+            <button class="chip" onclick="selectCategory('❄️ Frozen')">❄️ Frozen</button>
+            <button class="chip" onclick="selectCategory('🧹 Household')">🧹 Household</button>
+            <button class="chip" onclick="selectCategory('🥫 Pantry')">🥫 Pantry</button>
+            <button class="chip" onclick="selectCategory('🍛 Indian Store')">🍛 Indian Store</button>
+          </div>
+
+          <label class="field-label">ADD CUSTOM CATEGORY CHIP</label>
+          <div class="custom-category-box">
+            <input type="text" class="input-field" id="customChipInput" placeholder="e.g. 🐾 Pet Supplies" />
+            <button class="btn-secondary btn-inline" onclick="addCustomChip()">Add</button>
+          </div>
+
+          <button class="btn-submit" id="submitBtn" onclick="addItem()">Add to Grocery List</button>
+        </div>
+
+        <!-- Filter and Search Toolbar -->
+        <div class="list-toolbar">
+          <input type="text" class="input-field search-input" id="searchInput" placeholder="🔍 Search items..." oninput="renderList()" />
+          <select class="input-field filter-select" id="filterCategory" onchange="renderList()">
+            <option value="ALL">All Categories</option>
+          </select>
+        </div>
+
+        <!-- Displayed List Container -->
+        <ul class="items-list" id="itemsList"></ul>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
