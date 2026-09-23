@@ -52,7 +52,7 @@
           <span class="user-icon">👤</span>
           <span id="user-display-name">ASWATHY</span>
         </div>
-        <button id="theme-toggle-btn" class="pill-btn"><span class="moon-icon">🌙</span> Dark</button>
+        <button id="theme-toggle-btn" class="pill-btn"><span id="theme-icon">🌙</span> <span id="theme-text">Dark</span></button>
         <button id="share-btn" class="pill-btn accent-btn">🔗 Share</button>
         <button id="logout-btn" class="pill-btn danger-btn">Sign Out</button>
       </div>
@@ -66,7 +66,7 @@
         <div class="tab-group">
           <button class="tab-btn active" id="tab-active">Active List <span class="badge-count" id="active-count">0</span></button>
           <button class="tab-btn" id="tab-add">+ Add Item</button>
-          <button class="tab-btn" id="tab-removed">⚪ Removed</button>
+          <button class="tab-btn" id="tab-removed">⚪ Removed <span class="badge-count" id="removed-count">0</span></button>
         </div>
         <div class="history-actions">
           <button id="undo-btn" class="icon-btn" title="Undo">↩ Undo</button>
@@ -74,65 +74,70 @@
         </div>
       </div>
 
-      <hr class="divider" />
-
-      <!-- SECTION TITLE -->
-      <h2 class="section-title">Add New Grocery Item</h2>
-
-      <!-- ITEM NAME INPUT -->
-      <div class="field-group">
-        <label>Item Name</label>
-        <input type="text" id="item-input" placeholder="e.g. Puff pastry, Apples, Milk..." />
-      </div>
-
-      <!-- CATEGORY INPUT -->
-      <div class="field-group">
-        <label>Category (Auto-detected or custom)</label>
-        <input type="text" id="category-input" placeholder="e.g. 🥐 Bakery" />
-        <p class="field-hint">💡 Quick select or type a custom category to teach the app!</p>
-      </div>
-
-      <!-- QUICK CATEGORIES CHIPS -->
-      <div class="category-section">
-        <label class="sub-label">QUICK CATEGORIES</label>
-        <div class="chips-grid" id="quick-categories-grid">
-          <button class="chip-btn" data-cat="Produce">🥦 Produce</button>
-          <button class="chip-btn" data-cat="Dairy">🧀 Dairy</button>
-          <button class="chip-btn" data-cat="Bakery">🥐 Bakery</button>
-          <button class="chip-btn" data-cat="Meat & Seafood">🥩 Meat & Seafood</button>
-          <button class="chip-btn" data-cat="Snacks">🍿 Snacks</button>
-          <button class="chip-btn" data-cat="Drinks">🧃 Drinks</button>
-          <button class="chip-btn" data-cat="Frozen">❄️ Frozen</button>
-          <button class="chip-btn" data-cat="Household">🧹 Household</button>
-          <button class="chip-btn" data-cat="Pantry">🥫 Pantry</button>
-          <button class="chip-btn" data-cat="Indian Store">🍲 Indian Store</button>
+      <!-- VIEW 1: ACTIVE LIST VIEW -->
+      <section id="view-active-list">
+        <div class="filter-bar-container">
+          <label class="sub-label">FILTER BY CATEGORY</label>
+          <div class="category-bar" id="category-bar">
+            <button class="category-btn active" data-category="All">All</button>
+          </div>
         </div>
-      </div>
 
-      <!-- ADD CUSTOM CATEGORY CHIP -->
-      <div class="custom-chip-section">
-        <label class="sub-label">ADD CUSTOM CATEGORY CHIP</label>
-        <div class="input-with-button">
-          <input type="text" id="custom-chip-input" placeholder="e.g. 🐾 Pet Supplies" />
-          <button id="add-chip-btn" class="secondary-btn">Add</button>
+        <ul id="grocery-list" class="grocery-items-list"></ul>
+      </section>
+
+      <!-- VIEW 2: ADD ITEM FORM VIEW -->
+      <section id="view-add-item" style="display: none;">
+        <h2 class="section-title">Add New Grocery Item</h2>
+
+        <!-- ITEM NAME INPUT -->
+        <div class="field-group">
+          <label>Item Name</label>
+          <input type="text" id="item-input" placeholder="e.g. Puff pastry, Apples, Milk..." />
         </div>
-      </div>
 
-      <!-- MAIN SUBMIT BUTTON -->
-      <button id="add-btn" class="submit-list-btn">Add to Grocery List</button>
-
-      <hr class="divider" />
-
-      <!-- FILTER BAR FOR LIST -->
-      <div class="filter-bar-container">
-        <label class="sub-label">FILTER BY CATEGORY</label>
-        <div class="category-bar" id="category-bar">
-          <button class="category-btn active" data-category="All">All</button>
+        <!-- CATEGORY INPUT -->
+        <div class="field-group">
+          <label>Category (Auto-detected or custom)</label>
+          <input type="text" id="category-input" placeholder="e.g. 🥐 Bakery" />
+          <p class="field-hint">💡 Quick select or type a custom category to teach the app!</p>
         </div>
-      </div>
 
-      <!-- GROCERY ITEMS LIST -->
-      <ul id="grocery-list" class="grocery-items-list"></ul>
+        <!-- QUICK CATEGORIES CHIPS -->
+        <div class="category-section">
+          <label class="sub-label">QUICK CATEGORIES</label>
+          <div class="chips-grid" id="quick-categories-grid">
+            <button class="chip-btn" data-cat="Produce">🥦 Produce</button>
+            <button class="chip-btn" data-cat="Dairy">🧀 Dairy</button>
+            <button class="chip-btn" data-cat="Bakery">🥐 Bakery</button>
+            <button class="chip-btn" data-cat="Meat & Seafood">🥩 Meat & Seafood</button>
+            <button class="chip-btn" data-cat="Snacks">🍿 Snacks</button>
+            <button class="chip-btn" data-cat="Drinks">🧃 Drinks</button>
+            <button class="chip-btn" data-cat="Frozen">❄️ Frozen</button>
+            <button class="chip-btn" data-cat="Household">🧹 Household</button>
+            <button class="chip-btn" data-cat="Pantry">🥫 Pantry</button>
+            <button class="chip-btn" data-cat="Indian Store">🍲 Indian Store</button>
+          </div>
+        </div>
+
+        <!-- ADD CUSTOM CATEGORY CHIP -->
+        <div class="custom-chip-section">
+          <label class="sub-label">ADD CUSTOM CATEGORY CHIP</label>
+          <div class="input-with-button">
+            <input type="text" id="custom-chip-input" placeholder="e.g. 🐾 Pet Supplies" />
+            <button id="add-chip-btn" class="secondary-btn">Add</button>
+          </div>
+        </div>
+
+        <!-- MAIN SUBMIT BUTTON -->
+        <button id="add-btn" class="submit-list-btn">Add to Grocery List</button>
+      </section>
+
+      <!-- VIEW 3: REMOVED ITEMS VIEW -->
+      <section id="view-removed-list" style="display: none;">
+        <h2 class="section-title">Removed / Completed Items</h2>
+        <ul id="removed-list" class="grocery-items-list"></ul>
+      </section>
 
     </main>
   </div>
