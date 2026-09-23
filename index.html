@@ -4,393 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Smart List Manager</title>
-  <style>
-    :root {
-      --bg-main: #0c0e17;
-      --panel-bg: #151828;
-      --card-bg: #1c2035;
-      --input-bg: #121422;
-      --text-main: #ffffff;
-      --text-muted: #8b92b0;
-      --accent-blue: #5c82f6;
-      --accent-hover: #4a6ee0;
-      --chip-bg: #262b45;
-      --chip-hover: #333a5c;
-      --border-color: rgba(255, 255, 255, 0.08);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-
-    body {
-      background-color: var(--bg-main);
-      color: var(--text-main);
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    /* --- SIDEBAR & COLLAPSIBLE DRAWER --- */
-    .sidebar {
-      width: 260px;
-      background-color: var(--panel-bg);
-      border-right: 1px solid var(--border-color);
-      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
-      overflow: hidden;
-      white-space: nowrap;
-      z-index: 10;
-    }
-
-    .sidebar.collapsed {
-      width: 64px;
-    }
-
-    .sidebar-header {
-      display: flex;
-      align-items: center;
-      padding: 16px;
-      height: 64px;
-    }
-
-    /* Shopping Cart Toggle Button */
-    .toggle-btn {
-      background: transparent;
-      border: none;
-      font-size: 22px;
-      cursor: pointer;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      transition: background-color 0.2s;
-    }
-
-    .toggle-btn:hover {
-      background-color: var(--chip-bg);
-    }
-
-    .nav-list {
-      list-style: none;
-      padding: 12px 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      padding: 10px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      color: var(--text-muted);
-      transition: all 0.2s;
-      font-weight: 500;
-    }
-
-    .nav-item:hover {
-      background-color: var(--chip-bg);
-      color: var(--text-main);
-    }
-
-    .nav-item.active {
-      background-color: var(--accent-blue);
-      color: var(--text-main);
-    }
-
-    .nav-icon {
-      font-size: 18px;
-      margin-right: 14px;
-      min-width: 24px;
-      display: flex;
-      justify-content: center;
-    }
-
-    .sidebar.collapsed .nav-text {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    /* --- MAIN CONTENT AREA --- */
-    .main-wrapper {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow-y: auto;
-    }
-
-    /* Top Header */
-    .top-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px 32px;
-      background-color: var(--bg-main);
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .header-title-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .header-title {
-      font-size: 22px;
-      font-weight: 700;
-    }
-
-    .live-badge {
-      font-size: 10px;
-      font-weight: 700;
-      background-color: #3b82f6;
-      color: #fff;
-      padding: 2px 6px;
-      border-radius: 10px;
-      letter-spacing: 0.5px;
-    }
-
-    .sub-tagline {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    .top-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .btn-secondary {
-      background-color: var(--chip-bg);
-      color: var(--text-main);
-      border: 1px solid var(--border-color);
-      padding: 6px 14px;
-      border-radius: 16px;
-      font-size: 13px;
-      cursor: pointer;
-    }
-
-    .btn-primary-sm {
-      background-color: var(--accent-blue);
-      color: white;
-      border: none;
-      padding: 6px 14px;
-      border-radius: 16px;
-      font-size: 13px;
-      cursor: pointer;
-    }
-
-    .btn-danger-sm {
-      background-color: #ef4444;
-      color: white;
-      border: none;
-      padding: 6px 14px;
-      border-radius: 16px;
-      font-size: 13px;
-      cursor: pointer;
-    }
-
-    /* Main Container */
-    .app-container {
-      max-width: 800px;
-      margin: 24px auto;
-      width: 100%;
-      padding: 0 16px;
-    }
-
-    .app-card {
-      background-color: var(--panel-bg);
-      border-radius: 16px;
-      border: 1px solid var(--border-color);
-      padding: 24px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    }
-
-    /* Tab Bar */
-    .tab-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-
-    .tab-group {
-      display: flex;
-      gap: 8px;
-    }
-
-    .tab-btn {
-      background-color: var(--chip-bg);
-      color: var(--text-muted);
-      border: none;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 13px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .tab-btn.active {
-      background-color: var(--accent-blue);
-      color: white;
-    }
-
-    .count-pill {
-      background-color: rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
-      padding: 0 6px;
-      font-size: 11px;
-    }
-
-    .history-controls {
-      display: flex;
-      gap: 8px;
-    }
-
-    /* Form Styles */
-    .form-title {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 16px;
-    }
-
-    .field-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
-      letter-spacing: 0.5px;
-      margin-bottom: 6px;
-      display: block;
-      text-transform: uppercase;
-    }
-
-    .input-field {
-      width: 100%;
-      background-color: var(--input-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 12px 14px;
-      color: var(--text-main);
-      font-size: 14px;
-      margin-bottom: 16px;
-      outline: none;
-    }
-
-    .input-field:focus {
-      border-color: var(--accent-blue);
-    }
-
-    .info-tip {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: -8px;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    /* Chips */
-    .chips-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 20px;
-    }
-
-    .chip {
-      background-color: var(--chip-bg);
-      color: var(--text-main);
-      padding: 6px 12px;
-      border-radius: 16px;
-      font-size: 13px;
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: all 0.2s;
-    }
-
-    .chip:hover {
-      background-color: var(--chip-hover);
-    }
-
-    /* Custom Category Input */
-    .custom-category-box {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 24px;
-    }
-
-    .custom-category-box input {
-      margin-bottom: 0;
-    }
-
-    /* Submit Button */
-    .btn-submit {
-      width: 100%;
-      background-color: var(--accent-blue);
-      color: white;
-      border: none;
-      padding: 14px;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-
-    .btn-submit:hover {
-      background-color: var(--accent-hover);
-    }
-
-    /* Items List */
-    .items-list {
-      margin-top: 24px;
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .list-item-row {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 12px 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .item-info {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .item-name {
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .item-category {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
@@ -398,6 +12,7 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <button class="toggle-btn" id="toggleBtn" title="Toggle Sidebar">🛒</button>
+      <span class="brand-title">Smart List</span>
     </div>
 
     <ul class="nav-list">
@@ -409,7 +24,25 @@
         <span class="nav-icon">🏪</span>
         <span class="nav-text">Costco List</span>
       </li>
+      <li class="nav-item" id="navPantry" onclick="switchList('Pantry Inventory')">
+        <span class="nav-icon">🥫</span>
+        <span class="nav-text">Pantry Inventory</span>
+      </li>
+      <li class="nav-item" id="navRecipes" onclick="switchList('Recipe Planner')">
+        <span class="nav-icon">📖</span>
+        <span class="nav-text">Recipe Planner</span>
+      </li>
     </ul>
+
+    <div class="sidebar-footer">
+      <div class="user-badge">
+        <div class="avatar">A</div>
+        <div class="user-details">
+          <span class="user-name">ASWATHY</span>
+          <span class="user-status">Pro Plan</span>
+        </div>
+      </div>
+    </div>
   </aside>
 
   <!-- Main View Container -->
@@ -417,76 +50,127 @@
     
     <!-- Top Header -->
     <header class="top-header">
-      <div>
+      <div class="header-left">
         <div class="header-title-group">
           <h1 class="header-title" id="headerTitle">Grocery List</h1>
           <span class="live-badge">LIVE</span>
         </div>
-        <p class="sub-tagline">Smart Auto-Categorised</p>
+        <p class="sub-tagline">Smart Auto-Categorised Shopping Assistant</p>
       </div>
 
       <div class="top-actions">
-        <button class="btn-secondary">👤 ASWATHY</button>
-        <button class="btn-secondary">🌙 Dark</button>
-        <button class="btn-primary-sm">🔗 Share</button>
+        <button class="btn-icon" title="Notifications">🔔</button>
+        <button class="btn-secondary" id="themeToggleBtn" onclick="toggleTheme()">🌙 Dark</button>
+        <button class="btn-primary-sm" onclick="shareList()">🔗 Share</button>
         <button class="btn-danger-sm">Sign Out</button>
       </div>
     </header>
 
     <!-- Main Form & Content -->
     <div class="app-container">
+      
+      <!-- Stats & Summary Bar -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">Total Items</span>
+          <span class="stat-value" id="statTotal">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Completed</span>
+          <span class="stat-value" id="statCompleted">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Categories</span>
+          <span class="stat-value" id="statCategories">0</span>
+        </div>
+      </div>
+
       <div class="app-card">
         
         <!-- Tab Bar -->
         <div class="tab-bar">
           <div class="tab-group">
-            <button class="tab-btn active">
+            <button class="tab-btn active" id="tabActive" onclick="setTab('active')">
               Active List <span class="count-pill" id="activeCount">0</span>
             </button>
-            <button class="tab-btn">+ Add Item</button>
-            <button class="tab-btn">⚪ Removed <span class="count-pill">0</span></button>
+            <button class="tab-btn" id="tabCompleted" onclick="setTab('completed')">
+              Completed <span class="count-pill" id="completedCount">0</span>
+            </button>
+            <button class="tab-btn" id="tabRemoved" onclick="setTab('removed')">
+              ⚪ Removed <span class="count-pill" id="removedCount">0</span>
+            </button>
           </div>
 
           <div class="history-controls">
-            <button class="btn-secondary">⤺ Undo</button>
-            <button class="btn-secondary">⤿ Redo</button>
+            <button class="btn-secondary" onclick="undoAction()">⤺ Undo</button>
+            <button class="btn-secondary" onclick="redoAction()">⤿ Redo</button>
           </div>
         </div>
 
         <!-- Add Item Form -->
-        <h2 class="form-title" id="formTitle">Add New Grocery Item</h2>
+        <div class="form-section">
+          <h2 class="form-title" id="formTitle">Add New Grocery Item</h2>
 
-        <label class="field-label">ITEM NAME</label>
-        <input type="text" class="input-field" id="itemNameInput" placeholder="e.g. Puff pastry, Apples, Milk..." />
+          <div class="form-row">
+            <div class="form-group flex-2">
+              <label class="field-label" for="itemNameInput">ITEM NAME</label>
+              <input type="text" class="input-field" id="itemNameInput" placeholder="e.g. Puff pastry, Apples, Milk..." />
+            </div>
 
-        <label class="field-label">CATEGORY (AUTO-DETECTED OR CUSTOM)</label>
-        <input type="text" class="input-field" id="categoryInput" placeholder="e.g. 🥐 Bakery" />
+            <div class="form-group flex-1">
+              <label class="field-label" for="quantityInput">QTY</label>
+              <input type="number" class="input-field" id="quantityInput" value="1" min="1" />
+            </div>
 
-        <div class="info-tip">
-          💡 Quick select or type a custom category to teach the app!
+            <div class="form-group flex-1">
+              <label class="field-label" for="unitSelect">UNIT</label>
+              <select class="input-field" id="unitSelect">
+                <option value="pcs">pcs</option>
+                <option value="kg">kg</option>
+                <option value="g">g</option>
+                <option value="L">L</option>
+                <option value="pack">pack</option>
+              </select>
+            </div>
+          </div>
+
+          <label class="field-label" for="categoryInput">CATEGORY (AUTO-DETECTED OR CUSTOM)</label>
+          <input type="text" class="input-field" id="categoryInput" placeholder="e.g. 🥐 Bakery" />
+
+          <div class="info-tip">
+            💡 Quick select or type a custom category to teach the app!
+          </div>
+
+          <label class="field-label">QUICK CATEGORIES</label>
+          <div class="chips-grid" id="chipsContainer">
+            <button class="chip" onclick="selectCategory('🥦 Produce')">🥦 Produce</button>
+            <button class="chip" onclick="selectCategory('🧀 Dairy')">🧀 Dairy</button>
+            <button class="chip" onclick="selectCategory('🥐 Bakery')">🥐 Bakery</button>
+            <button class="chip" onclick="selectCategory('🥩 Meat & Seafood')">🥩 Meat & Seafood</button>
+            <button class="chip" onclick="selectCategory('🍿 Snacks')">🍿 Snacks</button>
+            <button class="chip" onclick="selectCategory('🧃 Drinks')">🧃 Drinks</button>
+            <button class="chip" onclick="selectCategory('❄️ Frozen')">❄️ Frozen</button>
+            <button class="chip" onclick="selectCategory('🧹 Household')">🧹 Household</button>
+            <button class="chip" onclick="selectCategory('🥫 Pantry')">🥫 Pantry</button>
+            <button class="chip" onclick="selectCategory('🍛 Indian Store')">🍛 Indian Store</button>
+          </div>
+
+          <label class="field-label">ADD CUSTOM CATEGORY CHIP</label>
+          <div class="custom-category-box">
+            <input type="text" class="input-field" id="customChipInput" placeholder="e.g. 🐾 Pet Supplies" />
+            <button class="btn-secondary btn-inline" onclick="addCustomChip()">Add</button>
+          </div>
+
+          <button class="btn-submit" id="submitBtn" onclick="addItem()">Add to Grocery List</button>
         </div>
 
-        <label class="field-label">QUICK CATEGORIES</label>
-        <div class="chips-grid">
-          <button class="chip" onclick="selectCategory('🥦 Produce')">🥦 Produce</button>
-          <button class="chip" onclick="selectCategory('🧀 Dairy')">🧀 Dairy</button>
-          <button class="chip" onclick="selectCategory('🥐 Bakery')">🥐 Bakery</button>
-          <button class="chip" onclick="selectCategory('🥩 Meat & Seafood')">🥩 Meat & Seafood</button>
-          <button class="chip" onclick="selectCategory('🍿 Snacks')">🍿 Snacks</button>
-          <button class="chip" onclick="selectCategory('🧃 Drinks')">🧃 Drinks</button>
-          <button class="chip" onclick="selectCategory('❄️ Frozen')">❄️ Frozen</button>
-          <button class="chip" onclick="selectCategory('🧹 Household')">🧹 Household</button>
-          <button class="chip" onclick="selectCategory('🥫 Pantry')">🥫 Pantry</button>
-          <button class="chip" onclick="selectCategory('🍛 Indian Store')">🍛 Indian Store</button>
+        <!-- Filter and Search Toolbar -->
+        <div class="list-toolbar">
+          <input type="text" class="input-field search-input" id="searchInput" placeholder="🔍 Search items..." oninput="renderList()" />
+          <select class="input-field filter-select" id="filterCategory" onchange="renderList()">
+            <option value="ALL">All Categories</option>
+          </select>
         </div>
-
-        <label class="field-label">ADD CUSTOM CATEGORY CHIP</label>
-        <div class="custom-category-box">
-          <input type="text" class="input-field" id="customChipInput" placeholder="e.g. 🐾 Pet Supplies" />
-          <button class="btn-secondary" style="border-radius: 8px; padding: 0 20px;" onclick="addCustomChip()">Add</button>
-        </div>
-
-        <button class="btn-submit" id="submitBtn" onclick="addItem()">Add to Grocery List</button>
 
         <!-- Displayed List Container -->
         <ul class="items-list" id="itemsList"></ul>
@@ -495,138 +179,6 @@
     </div>
   </div>
 
-  <script>
-    // Data store for separate lists
-    const listsData = {
-      'Grocery List': [],
-      'Costco List': []
-    };
-
-    let activeListName = 'Grocery List';
-
-    // Auto-Categorisation Keywords Dictionary
-    const categoryKeywords = {
-      '🥦 Produce': ['apple', 'apples', 'banana', 'bananas', 'berry', 'berries', 'spinach', 'lettuce', 'tomato', 'tomatoes', 'potato', 'potatoes', 'onion', 'onions', 'garlic', 'carrot', 'carrots', 'avocado', 'lemon', 'lime', 'cucumber', 'grape', 'grapes'],
-      '🧀 Dairy': ['milk', 'cheese', 'butter', 'yogurt', 'yoghurt', 'cream', 'sour cream', 'paneer', 'egg', 'eggs'],
-      '🥐 Bakery': ['bread', 'puff pastry', 'croissant', 'bagel', 'bun', 'buns', 'muffin', 'cake', 'pita'],
-      '🥩 Meat & Seafood': ['chicken', 'beef', 'pork', 'lamb', 'salmon', 'fish', 'shrimp', 'prawns', 'bacon', 'turkey', 'mince', 'steak'],
-      '🍿 Snacks': ['chips', 'chocolate', 'popcorn', 'nuts', 'biscuit', 'biscuits', 'crackers', 'cookie', 'cookies', 'candy'],
-      '🧃 Drinks': ['juice', 'soda', 'coke', 'water', 'coffee', 'tea', 'sparkling water', 'energy drink'],
-      '❄️ Frozen': ['ice cream', 'frozen peas', 'pizza', 'frozen berries', 'nuggets', 'frozen veggies'],
-      '🧹 Household': ['paper towel', 'toilet paper', 'dish soap', 'laundry detergent', 'trash bags', 'sponge', 'cleaner'],
-      '🥫 Pantry': ['rice', 'pasta', 'olive oil', 'flour', 'sugar', 'salt', 'pepper', 'sauce', 'cereal', 'oats', 'canned beans', 'chickpeas'],
-      '🍛 Indian Store': ['atta', 'basmati', 'dal', 'ghee', 'masala', 'turmeric', 'paneer', 'roti', 'naan']
-    };
-
-    // DOM Element references
-    const sidebar = document.getElementById('sidebar');
-    const toggleBtn = document.getElementById('toggleBtn');
-    const headerTitle = document.getElementById('headerTitle');
-    const formTitle = document.getElementById('formTitle');
-    const submitBtn = document.getElementById('submitBtn');
-    const itemNameInput = document.getElementById('itemNameInput');
-    const categoryInput = document.getElementById('categoryInput');
-    const activeCount = document.getElementById('activeCount');
-    const itemsList = document.getElementById('itemsList');
-
-    // Toggle collapsible drawer
-    toggleBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('collapsed');
-    });
-
-    // Auto-Categorise as user types an item name
-    itemNameInput.addEventListener('input', (e) => {
-      const query = e.target.value.toLowerCase().trim();
-      if (!query) {
-        categoryInput.value = '';
-        return;
-      }
-
-      let detectedCategory = '';
-
-      for (const [category, keywords] of Object.entries(categoryKeywords)) {
-        if (keywords.some(keyword => query.includes(keyword))) {
-          detectedCategory = category;
-          break;
-        }
-      }
-
-      if (detectedCategory) {
-        categoryInput.value = detectedCategory;
-      }
-    });
-
-    // Switch active view between Grocery List and Costco List
-    function switchList(listName) {
-      activeListName = listName;
-      headerTitle.textContent = listName;
-      formTitle.textContent = `Add New ${listName === 'Grocery List' ? 'Grocery' : 'Costco'} Item`;
-      submitBtn.textContent = `Add to ${listName}`;
-
-      // Automatically collapse sidebar when a menu item is clicked
-      sidebar.classList.add('collapsed');
-
-      // Update menu active highlights
-      document.getElementById('navGrocery').classList.toggle('active', listName === 'Grocery List');
-      document.getElementById('navCostco').classList.toggle('active', listName === 'Costco List');
-
-      renderList();
-    }
-
-    // Fill category input from chip selection
-    function selectCategory(categoryName) {
-      categoryInput.value = categoryName;
-    }
-
-    // Add custom chip dynamically
-    function addCustomChip() {
-      const chipInput = document.getElementById('customChipInput');
-      const val = chipInput.value.trim();
-      if (!val) return;
-
-      const chipsGrid = document.querySelector('.chips-grid');
-      const newBtn = document.createElement('button');
-      newBtn.className = 'chip';
-      newBtn.textContent = val;
-      newBtn.onclick = () => selectCategory(val);
-
-      chipsGrid.appendChild(newBtn);
-      chipInput.value = '';
-    }
-
-    // Add Item to current active list
-    function addItem() {
-      const name = itemNameInput.value.trim();
-      const category = categoryInput.value.trim() || '📦 Other';
-
-      if (!name) return;
-
-      listsData[activeListName].push({ name, category });
-
-      itemNameInput.value = '';
-      categoryInput.value = '';
-
-      renderList();
-    }
-
-    // Render active list items to DOM
-    function renderList() {
-      const currentList = listsData[activeListName];
-      activeCount.textContent = currentList.length;
-      itemsList.innerHTML = '';
-
-      currentList.forEach((item) => {
-        const li = document.createElement('li');
-        li.className = 'list-item-row';
-        li.innerHTML = `
-          <div class="item-info">
-            <span class="item-name">${item.name}</span>
-            <span class="item-category">${item.category}</span>
-          </div>
-        `;
-        itemsList.appendChild(li);
-      });
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
