@@ -1,5 +1,5 @@
 // ==========================================
-// 1. FIREBASE CONFIGURATION & INITIALIZATION
+// 1. FIREBASE CONFIGURATION
 // ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyC7H4Z4SHfPfaZXJdMeAKG9szDg2KUdBpo",
@@ -11,12 +11,12 @@ const firebaseConfig = {
   appId: "1:429534628995:web:542e846166539d3f9edfb6"
 };
 
-// Initialize Firebase & Database Reference
+// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
 // ==========================================
-// 2. STATE MANAGEMENT & GLOBALS
+// 2. STATE MANAGEMENT
 // ==========================================
 let currentItems = [];
 let categoryMap = JSON.parse(localStorage.getItem("categoryMap")) || {
@@ -27,15 +27,11 @@ let categoryMap = JSON.parse(localStorage.getItem("categoryMap")) || {
   bread: "Bakery"
 };
 
-// History Stacks for Undo/Redo
 let undoStack = [];
 let redoStack = [];
-
-// Track Session & Active Filter
 let currentUser = localStorage.getItem("grocery_username") || "";
 let activeFilter = "All";
 
-// Witty Duplicate Alerts
 const WITTY_ALERTS = [
   "Hold your horses! That item is already on your list. 🐴",
   "Deja vu? You already added that item! 🌀",
@@ -47,26 +43,25 @@ const WITTY_ALERTS = [
 // ==========================================
 // 3. DOM ELEMENTS
 // ==========================================
-const loginContainer = document.getElementById("loginContainer");
-const appContainer = document.getElementById("appContainer");
-const usernameInput = document.getElementById("usernameInput");
-const passwordInput = document.getElementById("passwordInput");
-const loginBtn = document.getElementById("loginBtn");
-const loginError = document.getElementById("loginError");
-const logoutBtn = document.getElementById("logoutBtn");
+const loginContainer = document.getElementById("login-container");
+const appContainer = document.getElementById("app-container");
+const usernameInput = document.getElementById("username");
+const passwordInput = document.getElementById("password");
+const loginBtn = document.getElementById("login-btn");
+const logoutBtn = document.getElementById("logout-btn");
 
-const itemInput = document.getElementById("itemInput");
-const categoryInput = document.getElementById("categoryInput");
-const addItemBtn = document.getElementById("addItemBtn");
-const groceryList = document.getElementById("groceryList");
-const filterBar = document.querySelector(".filter-bar");
+const itemInput = document.getElementById("item-input");
+const categoryInput = document.getElementById("category-input");
+const addBtn = document.getElementById("add-btn");
+const groceryList = document.getElementById("grocery-list");
+const categoryBar = document.getElementById("category-bar");
 
-const undoBtn = document.getElementById("undoBtn");
-const redoBtn = document.getElementById("redoBtn");
-const shareBtn = document.getElementById("shareBtn");
+const undoBtn = document.getElementById("undo-btn");
+const redoBtn = document.getElementById("redo-btn");
+const shareBtn = document.getElementById("share-btn");
 
 // ==========================================
-// 4. AUTHENTICATION & SESSION HANDLING
+// 4. AUTHENTICATION & SESSION
 // ==========================================
 function initApp() {
   if (currentUser) {
@@ -83,24 +78,21 @@ loginBtn.addEventListener("click", () => {
   const user = usernameInput.value.trim();
   const pass = passwordInput.value.trim();
 
-  // Strict Hardcoded Authentication
   if (user === "ASWATHY" && pass === "HARI") {
     currentUser = user;
     localStorage.setItem("grocery_username", currentUser);
-    loginError.style.display = "none";
     usernameInput.value = "";
     passwordInput.value = "";
     initApp();
   } else {
-    loginError.textContent = "Invalid username or password!";
-    loginError.style.display = "block";
+    alert("Invalid username or password!");
   }
 });
 
 logoutBtn.addEventListener("click", () => {
   if (currentUser) {
     const safeUser = currentUser.toLowerCase().trim().replace(/[.#$\[\]]/g, "_");
-    database.ref("lists/" + safeUser).off(); // Stop listening
+    database.ref("lists/" + safeUser).off();
   }
   currentUser = "";
   localStorage.removeItem("grocery_username");
@@ -108,7 +100,7 @@ logoutBtn.addEventListener("click", () => {
 });
 
 // ==========================================
-// 5. FIREBASE CLOUD SYNCING
+// 5. FIREBASE SYNCING
 // ==========================================
 function listenToFirebaseUpdates() {
   if (!currentUser) return;
@@ -116,7 +108,6 @@ function listenToFirebaseUpdates() {
   const safeUser = currentUser.toLowerCase().trim().replace(/[.#$\[\]]/g, "_");
   const listRef = database.ref("lists/" + safeUser);
 
-  // Sync real-time updates across all logged-in devices
   listRef.on("value", (snapshot) => {
     const data = snapshot.val();
     currentItems = data && data.items ? data.items : [];
@@ -137,7 +128,7 @@ function syncToFirebase(items) {
 
 function updateItemsAndSync(newItems) {
   undoStack.push(JSON.parse(JSON.stringify(currentItems)));
-  redoStack = []; // Clear redo on new action
+  redoStack = [];
   currentItems = newItems;
   syncToFirebase(currentItems);
 }
@@ -149,7 +140,6 @@ function addItem() {
   const name = itemInput.value.trim();
   if (!name) return;
 
-  // Case-insensitive Duplicate Check
   const isDuplicate = currentItems.some(
     (item) => item.name.toLowerCase() === name.toLowerCase()
   );
@@ -160,7 +150,6 @@ function addItem() {
     return;
   }
 
-  // Auto-Categorization & Learning
   const lowerName = name.toLowerCase();
   let category = categoryInput.value.trim();
 
@@ -196,7 +185,6 @@ function removeItem(id) {
   updateItemsAndSync(updated);
 }
 
-// Undo / Redo Handlers
 undoBtn.addEventListener("click", () => {
   if (undoStack.length === 0) return;
   redoStack.push(JSON.parse(JSON.stringify(currentItems)));
@@ -224,53 +212,47 @@ function renderList() {
 
   filteredItems.forEach((item) => {
     const li = document.createElement("li");
-    li.className = `list-item ${item.completed ? "completed" : ""}`;
+    if (item.completed) li.classList.add("completed");
 
-    li.innerHTML = `
-      <span class="item-info">
-        <strong>${escapeHtml(item.name)}</strong>
-        <small class="category-tag">${escapeHtml(item.category)}</small>
-      </span>
-      <div class="item-actions">
-        <button class="check-btn">${item.completed ? "↩️" : "✅"}</button>
-        <button class="delete-btn">🗑️</button>
-      </div>
-    `;
+    const textSpan = document.createElement("span");
+    textSpan.textContent = `${item.name} (${item.category})`;
+    textSpan.addEventListener("click", () => toggleItem(item.id));
 
-    li.querySelector(".check-btn").addEventListener("click", () => toggleItem(item.id));
-    li.querySelector(".delete-btn").addEventListener("click", () => removeItem(item.id));
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "❌";
+    deleteBtn.className = "delete-btn";
+    deleteBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      removeItem(item.id);
+    });
 
+    li.appendChild(textSpan);
+    li.appendChild(deleteBtn);
     groceryList.appendChild(li);
   });
 }
 
 function renderCategoryFilters() {
   const categories = ["All", ...new Set(currentItems.map((i) => i.category))];
-  filterBar.innerHTML = "";
+  categoryBar.innerHTML = "";
 
   categories.forEach((cat) => {
-    const chip = document.createElement("button");
-    chip.className = `filter-chip ${cat === activeFilter ? "active" : ""}`;
-    chip.textContent = cat;
-    chip.addEventListener("click", () => {
+    const btn = document.createElement("button");
+    btn.className = `category-btn ${cat === activeFilter ? "active" : ""}`;
+    btn.textContent = cat;
+    btn.addEventListener("click", () => {
       activeFilter = cat;
       renderCategoryFilters();
       renderList();
     });
-    filterBar.appendChild(chip);
+    categoryBar.appendChild(btn);
   });
 }
 
-function escapeHtml(str) {
-  return str.replace(/[&<>"']/g, (m) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
-  })[m]);
-}
-
 // ==========================================
-// 8. SHARE & UTILITY EVENT LISTENERS
+// 8. EVENT LISTENERS & INITIALIZATION
 // ==========================================
-addItemBtn.addEventListener("click", addItem);
+addBtn.addEventListener("click", addItem);
 itemInput.addEventListener("keypress", (e) => {
   if (e.key === "Enter") addItem();
 });
@@ -279,12 +261,11 @@ shareBtn.addEventListener("click", () => {
   const siteUrl = window.location.href;
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(siteUrl)
-      .then(() => alert("Site link copied! Share this link and sign in credentials with your friend to view the live list. 📋"))
+      .then(() => alert("Site link copied to clipboard! 📋"))
       .catch(() => prompt("Copy your site link here:", siteUrl));
   } else {
     prompt("Copy your site link here:", siteUrl);
   }
 });
 
-// Initialize App Session on Page Load
 initApp();
