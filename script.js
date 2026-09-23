@@ -23,8 +23,10 @@ let categoryMap = JSON.parse(localStorage.getItem("categoryMap")) || {
   milk: "Dairy",
   cheese: "Dairy",
   apple: "Produce",
+  apples: "Produce",
   banana: "Produce",
-  bread: "Bakery"
+  bread: "Bakery",
+  "puff pastry": "Bakery"
 };
 
 let undoStack = [];
@@ -49,12 +51,18 @@ const usernameInput = document.getElementById("username");
 const passwordInput = document.getElementById("password");
 const loginBtn = document.getElementById("login-btn");
 const logoutBtn = document.getElementById("logout-btn");
+const userDisplayName = document.getElementById("user-display-name");
 
 const itemInput = document.getElementById("item-input");
 const categoryInput = document.getElementById("category-input");
 const addBtn = document.getElementById("add-btn");
 const groceryList = document.getElementById("grocery-list");
 const categoryBar = document.getElementById("category-bar");
+const activeCount = document.getElementById("active-count");
+
+const quickCategoriesGrid = document.getElementById("quick-categories-grid");
+const customChipInput = document.getElementById("custom-chip-input");
+const addChipBtn = document.getElementById("add-chip-btn");
 
 const undoBtn = document.getElementById("undo-btn");
 const redoBtn = document.getElementById("redo-btn");
@@ -67,6 +75,7 @@ function initApp() {
   if (currentUser) {
     loginContainer.style.display = "none";
     appContainer.style.display = "block";
+    userDisplayName.textContent = currentUser.toUpperCase();
     listenToFirebaseUpdates();
   } else {
     loginContainer.style.display = "block";
@@ -100,7 +109,7 @@ logoutBtn.addEventListener("click", () => {
 });
 
 // ==========================================
-// 5. FIREBASE SYNCING
+// 5. FIREBASE REAL-TIME SYNC
 // ==========================================
 function listenToFirebaseUpdates() {
   if (!currentUser) return;
@@ -134,7 +143,7 @@ function updateItemsAndSync(newItems) {
 }
 
 // ==========================================
-// 6. ITEM MANAGEMENT & UNDO/REDO
+// 6. ITEM & CATEGORY CHIP MANAGEMENT
 // ==========================================
 function addItem() {
   const name = itemInput.value.trim();
@@ -185,6 +194,29 @@ function removeItem(id) {
   updateItemsAndSync(updated);
 }
 
+// Quick select chips listener
+quickCategoriesGrid.addEventListener("click", (e) => {
+  if (e.target.classList.contains("chip-btn")) {
+    const selectedCat = e.target.getAttribute("data-cat") || e.target.textContent;
+    categoryInput.value = selectedCat;
+  }
+});
+
+// Add custom chip button listener
+addChipBtn.addEventListener("click", () => {
+  const newChipText = customChipInput.value.trim();
+  if (!newChipText) return;
+
+  const newBtn = document.createElement("button");
+  newBtn.className = "chip-btn";
+  newBtn.setAttribute("data-cat", newChipText);
+  newBtn.textContent = newChipText;
+
+  quickCategoriesGrid.appendChild(newBtn);
+  customChipInput.value = "";
+});
+
+// Undo / Redo Actions
 undoBtn.addEventListener("click", () => {
   if (undoStack.length === 0) return;
   redoStack.push(JSON.parse(JSON.stringify(currentItems)));
@@ -205,6 +237,9 @@ redoBtn.addEventListener("click", () => {
 function renderList() {
   groceryList.innerHTML = "";
 
+  const activeItems = currentItems.filter((i) => !i.completed);
+  activeCount.textContent = activeItems.length;
+
   const filteredItems = currentItems.filter((item) => {
     if (activeFilter === "All") return true;
     return item.category === activeFilter;
@@ -214,19 +249,29 @@ function renderList() {
     const li = document.createElement("li");
     if (item.completed) li.classList.add("completed");
 
+    const contentDiv = document.createElement("div");
+    
     const textSpan = document.createElement("span");
-    textSpan.textContent = `${item.name} (${item.category})`;
-    textSpan.addEventListener("click", () => toggleItem(item.id));
+    textSpan.className = "item-text";
+    textSpan.textContent = item.name;
+
+    const catSpan = document.createElement("span");
+    catSpan.className = "item-cat-tag";
+    catSpan.textContent = item.category;
+
+    contentDiv.appendChild(textSpan);
+    contentDiv.appendChild(catSpan);
+    contentDiv.addEventListener("click", () => toggleItem(item.id));
 
     const deleteBtn = document.createElement("button");
-    deleteBtn.textContent = "❌";
+    deleteBtn.textContent = "✕";
     deleteBtn.className = "delete-btn";
     deleteBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       removeItem(item.id);
     });
 
-    li.appendChild(textSpan);
+    li.appendChild(contentDiv);
     li.appendChild(deleteBtn);
     groceryList.appendChild(li);
   });
@@ -248,6 +293,14 @@ function renderCategoryFilters() {
     categoryBar.appendChild(btn);
   });
 }
+
+// Auto-fill category when typing item name
+itemInput.addEventListener("input", () => {
+  const val = itemInput.value.trim().toLowerCase();
+  if (categoryMap[val]) {
+    categoryInput.value = categoryMap[val];
+  }
+});
 
 // ==========================================
 // 8. EVENT LISTENERS & INITIALIZATION
