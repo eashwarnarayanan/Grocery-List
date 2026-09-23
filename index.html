@@ -1,57 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Smart List</title>
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Grocery List</title>
+<link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="app-container">
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-      <div class="brand">
-        <h2>Smart List</h2>
+
+<!-- ===================== LOGIN SCREEN ===================== -->
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <div class="login-brand">🛒 <span>Grocery List</span></div>
+    <p class="login-sub">Sign in to manage your smart grocery list</p>
+    <form id="login-form">
+      <label for="login-username">Username</label>
+      <input id="login-username" type="text" placeholder="Enter username" autocomplete="username" />
+      <label for="login-password">Password</label>
+      <input id="login-password" type="password" placeholder="Enter password" autocomplete="current-password" />
+      <p id="login-error" class="login-error" hidden>Incorrect username or password.</p>
+      <button type="submit" class="login-btn">Login</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div id="app" class="app-container" hidden>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <button id="toggleBtn" class="toggle-btn" title="Toggle sidebar">☰</button>
+      <div class="brand-title">🛒 Smart List</div>
+    </div>
+    <ul class="nav-list" id="navList"></ul>
+    <div class="sidebar-footer">
+      <div class="user-badge">👤 <span>ASWATHY &middot; Pro Plan</span></div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="top-header">
+      <div>
+        <h1 id="headerTitle">Grocery List <span class="live-badge">LIVE</span></h1>
+        <p class="subtitle">Smart Auto-Categorised Shopping Assistant</p>
       </div>
-      <nav class="nav-menu">
-        <button class="nav-item active" id="navGrocery" onclick="switchList('Grocery List')">Grocery List</button>
-        <button class="nav-item" id="navCostco" onclick="switchList('Costco List')">Costco List</button>
-        <button class="nav-item" id="navPantry" onclick="switchList('Pantry Inventory')">Pantry Inventory</button>
-        <button class="nav-item" id="navRecipes" onclick="switchList('Recipe Planner')">Recipe Planner</button>
-      </nav>
-      <div class="user-plan">
-        <span>ASWATHY Pro Plan</span>
+      <div class="header-right">
+        <span class="chip-btn">👤 ASWATHY</span>
+        <button id="darkToggle" class="chip-btn">🌙 Dark</button>
+        <button id="shareBtn" class="chip-btn accent">🔗 Share</button>
+        <button id="signOutBtn" class="chip-btn danger">Sign Out</button>
       </div>
-    </aside>
+    </header>
 
-    <!-- Main Content -->
-    <main class="main-content">
-      <header class="top-header">
-        <div>
-          <h1 id="headerTitle">Grocery List</h1>
-          <p class="subtitle">Smart Auto-Categorised Shopping Assistant</p>
-        </div>
-      </header>
+    <section class="stats-bar">
+      <div class="stat-card"><span class="stat-label">Total Items</span><span class="stat-value" id="statTotal">0</span></div>
+      <div class="stat-card"><span class="stat-label">Purchased</span><span class="stat-value" id="statCompleted">0</span></div>
+      <div class="stat-card"><span class="stat-label">Categories</span><span class="stat-value" id="statCategories">0</span></div>
+    </section>
 
-      <!-- Stats Bar -->
-      <section class="stats-bar">
-        <div class="stat-card">
-          <span class="stat-label">Total Items</span>
-          <span class="stat-value" id="statTotal">0</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-label">Completed</span>
-          <span class="stat-value" id="statCompleted">0</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-label">Categories</span>
-          <span class="stat-value" id="statCategories">0</span>
-        </div>
-      </section>
+    <section class="tabs-row">
+      <div class="tabs-left">
+        <button class="tab-pill" id="tabActiveBtn" data-tab="active">Active List <span class="count-badge" id="activeCountBadge">0</span></button>
+        <button class="tab-pill primary" id="tabAddBtn" data-tab="add">+ Add Item</button>
+        <button class="tab-pill" id="tabRemovedBtn" data-tab="removed">Removed <span class="count-badge" id="removedCountBadge">0</span></button>
+      </div>
+      <div class="tabs-right">
+        <button id="undoBtn" class="chip-btn" disabled>↩ Undo</button>
+        <button id="redoBtn" class="chip-btn" disabled>↪ Redo</button>
+      </div>
+    </section>
 
-      <!-- Add Item Form -->
-      <section class="form-card">
-        <h3 id="formTitle">Add New Grocery Item</h3>
-        I can certainly help you write code, but you haven't mentioned what program or feature you want to build! 
+    <section class="panel-card">
 
-Please tell me what you're working on—such as a specific programming language, game, website layout, or script—and I'll provide the complete code for you.
+      <div id="panel-add" class="panel">
+        <h3>Add New Grocery Item</h3>
+        <form id="add-form">
+          <label for="itemNameInput">Item Name</label>
+          <input id="itemNameInput" type="text" placeholder="e.g. Puff pastry, Apples, Milk..." autocomplete="off" />
+
+          <label for="categoryInput">Category (auto-detected or custom)</label>
+          <input id="categoryInput" type="text" placeholder="e.g. 🍞 Bakery" autocomplete="off" />
+          <p class="hint">💡 Quick select or type a custom category to teach the app!</p>
+
+          <label>Quick Categories</label>
+          <div id="quickCategories" class="chip-grid"></div>
+
+          <label for="customChipInput">Add Custom Category Chip</label>
+          <div class="custom-chip-row">
+            <input id="customChipInput" type="text" placeholder="e.g. 🐾 Pet Supplies" />
+            <button type="button" id="addChipBtn" class="chip-btn">Add</button>
+          </div>
+
+          <div class="qty-row">
+            <div>
+              <label for="quantityInput">Quantity</label>
+              <input id="quantityInput" type="number" min="1" value="1" />
+            </div>
+            <div>
+              <label for="unitSelect">Unit</label>
+              <select id="unitSelect">
+                <option value="pcs">pcs</option>
+                <option value="kg">kg</option>
+                <option value="g">g</option>
+                <option value="l">l</option>
+                <option value="ml">ml</option>
+                <option value="pack">pack</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" id="submitBtn" class="submit-btn">Add to Grocery List</button>
+        </form>
+      </div>
+
+      <div id="panel-active" class="panel" hidden>
+        <div class="list-toolbar">
+          <input id="searchInput" type="text" placeholder="Search items..." />
+          <select id="filterCategory"><option value="ALL">All Categories</option></select>
+        </div>
+        <div id="itemsList"></div>
+      </div>
+
+      <div id="panel-removed" class="panel" hidden>
+        <div id="removedList"></div>
+      </div>
+
+    </section>
+  </main>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="script.js"></script>
+</body>
+</html>
