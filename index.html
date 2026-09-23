@@ -59,7 +59,7 @@
       height: 64px;
     }
 
-    /* Cart Icon Toggle Button */
+    /* Shopping Cart Toggle Button */
     .toggle-btn {
       background: transparent;
       border: none;
@@ -130,7 +130,7 @@
       overflow-y: auto;
     }
 
-    /* Top Navigation Header */
+    /* Top Header */
     .top-header {
       display: flex;
       justify-content: space-between;
@@ -202,7 +202,7 @@
       cursor: pointer;
     }
 
-    /* Application Card Container */
+    /* Main Container */
     .app-container {
       max-width: 800px;
       margin: 24px auto;
@@ -218,7 +218,7 @@
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     }
 
-    /* Sub-header Tabs & Controls */
+    /* Tab Bar */
     .tab-bar {
       display: flex;
       justify-content: space-between;
@@ -261,7 +261,7 @@
       gap: 8px;
     }
 
-    /* Form Section */
+    /* Form Styles */
     .form-title {
       font-size: 18px;
       font-weight: 600;
@@ -304,7 +304,7 @@
       gap: 6px;
     }
 
-    /* Quick Category Chips */
+    /* Chips */
     .chips-grid {
       display: flex;
       flex-wrap: wrap;
@@ -327,12 +327,7 @@
       background-color: var(--chip-hover);
     }
 
-    .chip.selected {
-      border-color: var(--accent-blue);
-      background-color: rgba(92, 130, 246, 0.2);
-    }
-
-    /* Custom Category Add Box */
+    /* Custom Category Input */
     .custom-category-box {
       display: flex;
       gap: 8px;
@@ -343,7 +338,7 @@
       margin-bottom: 0;
     }
 
-    /* Action Submit Button */
+    /* Submit Button */
     .btn-submit {
       width: 100%;
       background-color: var(--accent-blue);
@@ -361,7 +356,7 @@
       background-color: var(--accent-hover);
     }
 
-    /* Rendered Items List */
+    /* Items List */
     .items-list {
       margin-top: 24px;
       list-style: none;
@@ -402,10 +397,7 @@
   <!-- Collapsible Side Drawer -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <!-- Shopping Cart Toggle Button -->
-      <button class="toggle-btn" id="toggleBtn" title="Toggle Sidebar">
-        🛒
-      </button>
+      <button class="toggle-btn" id="toggleBtn" title="Toggle Sidebar">🛒</button>
     </div>
 
     <ul class="nav-list">
@@ -451,12 +443,8 @@
             <button class="tab-btn active">
               Active List <span class="count-pill" id="activeCount">0</span>
             </button>
-            <button class="tab-btn">
-              + Add Item
-            </button>
-            <button class="tab-btn">
-              ⚪ Removed <span class="count-pill">0</span>
-            </button>
+            <button class="tab-btn">+ Add Item</button>
+            <button class="tab-btn">⚪ Removed <span class="count-pill">0</span></button>
           </div>
 
           <div class="history-controls">
@@ -508,7 +496,7 @@
   </div>
 
   <script>
-    // App State Storage
+    // Data store for separate lists
     const listsData = {
       'Grocery List': [],
       'Costco List': []
@@ -516,7 +504,21 @@
 
     let activeListName = 'Grocery List';
 
-    // DOM Elements
+    // Auto-Categorisation Keywords Dictionary
+    const categoryKeywords = {
+      '🥦 Produce': ['apple', 'apples', 'banana', 'bananas', 'berry', 'berries', 'spinach', 'lettuce', 'tomato', 'tomatoes', 'potato', 'potatoes', 'onion', 'onions', 'garlic', 'carrot', 'carrots', 'avocado', 'lemon', 'lime', 'cucumber', 'grape', 'grapes'],
+      '🧀 Dairy': ['milk', 'cheese', 'butter', 'yogurt', 'yoghurt', 'cream', 'sour cream', 'paneer', 'egg', 'eggs'],
+      '🥐 Bakery': ['bread', 'puff pastry', 'croissant', 'bagel', 'bun', 'buns', 'muffin', 'cake', 'pita'],
+      '🥩 Meat & Seafood': ['chicken', 'beef', 'pork', 'lamb', 'salmon', 'fish', 'shrimp', 'prawns', 'bacon', 'turkey', 'mince', 'steak'],
+      '🍿 Snacks': ['chips', 'chocolate', 'popcorn', 'nuts', 'biscuit', 'biscuits', 'crackers', 'cookie', 'cookies', 'candy'],
+      '🧃 Drinks': ['juice', 'soda', 'coke', 'water', 'coffee', 'tea', 'sparkling water', 'energy drink'],
+      '❄️ Frozen': ['ice cream', 'frozen peas', 'pizza', 'frozen berries', 'nuggets', 'frozen veggies'],
+      '🧹 Household': ['paper towel', 'toilet paper', 'dish soap', 'laundry detergent', 'trash bags', 'sponge', 'cleaner'],
+      '🥫 Pantry': ['rice', 'pasta', 'olive oil', 'flour', 'sugar', 'salt', 'pepper', 'sauce', 'cereal', 'oats', 'canned beans', 'chickpeas'],
+      '🍛 Indian Store': ['atta', 'basmati', 'dal', 'ghee', 'masala', 'turmeric', 'paneer', 'roti', 'naan']
+    };
+
+    // DOM Element references
     const sidebar = document.getElementById('sidebar');
     const toggleBtn = document.getElementById('toggleBtn');
     const headerTitle = document.getElementById('headerTitle');
@@ -527,9 +529,31 @@
     const activeCount = document.getElementById('activeCount');
     const itemsList = document.getElementById('itemsList');
 
-    // Toggle Collapsible Drawer
+    // Toggle collapsible drawer
     toggleBtn.addEventListener('click', () => {
       sidebar.classList.toggle('collapsed');
+    });
+
+    // Auto-Categorise as user types an item name
+    itemNameInput.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase().trim();
+      if (!query) {
+        categoryInput.value = '';
+        return;
+      }
+
+      let detectedCategory = '';
+
+      for (const [category, keywords] of Object.entries(categoryKeywords)) {
+        if (keywords.some(keyword => query.includes(keyword))) {
+          detectedCategory = category;
+          break;
+        }
+      }
+
+      if (detectedCategory) {
+        categoryInput.value = detectedCategory;
+      }
     });
 
     // Switch active view between Grocery List and Costco List
@@ -539,17 +563,17 @@
       formTitle.textContent = `Add New ${listName === 'Grocery List' ? 'Grocery' : 'Costco'} Item`;
       submitBtn.textContent = `Add to ${listName}`;
 
-      // Collapse sidebar upon selecting an item
+      // Automatically collapse sidebar when a menu item is clicked
       sidebar.classList.add('collapsed');
 
-      // Update Nav active styling
+      // Update menu active highlights
       document.getElementById('navGrocery').classList.toggle('active', listName === 'Grocery List');
       document.getElementById('navCostco').classList.toggle('active', listName === 'Costco List');
 
       renderList();
     }
 
-    // Select category from chip
+    // Fill category input from chip selection
     function selectCategory(categoryName) {
       categoryInput.value = categoryName;
     }
@@ -570,10 +594,10 @@
       chipInput.value = '';
     }
 
-    // Add Item to current Active List
+    // Add Item to current active list
     function addItem() {
       const name = itemNameInput.value.trim();
-      const category = categoryInput.value.trim() || 'Uncategorized';
+      const category = categoryInput.value.trim() || '📦 Other';
 
       if (!name) return;
 
@@ -585,7 +609,7 @@
       renderList();
     }
 
-    // Render active list items
+    // Render active list items to DOM
     function renderList() {
       const currentList = listsData[activeListName];
       activeCount.textContent = currentList.length;
