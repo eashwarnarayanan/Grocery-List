@@ -7,9 +7,8 @@ const listsData = {
 };
 
 let activeListName = 'Grocery List';
-let currentTab = 'active'; // 'active', 'completed', 'removed'
+let currentTab = 'active';
 
-// Undo/Redo Stacks
 const historyStack = [];
 const redoStack = [];
 
@@ -27,7 +26,7 @@ const categoryKeywords = {
   '🍛 Indian Store': ['atta', 'basmati', 'dal', 'ghee', 'masala', 'turmeric', 'paneer', 'roti', 'naan']
 };
 
-// DOM References
+// DOM Elements
 const sidebar = document.getElementById('sidebar');
 const toggleBtn = document.getElementById('toggleBtn');
 const headerTitle = document.getElementById('headerTitle');
@@ -47,39 +46,41 @@ const statTotal = document.getElementById('statTotal');
 const statCompleted = document.getElementById('statCompleted');
 const statCategories = document.getElementById('statCategories');
 
-// Collapsible Side Drawer
-toggleBtn.addEventListener('click', () => {
-  sidebar.classList.toggle('collapsed');
-});
-
-// Auto-Categorisation Listener
-itemNameInput.addEventListener('input', (e) => {
-  const query = e.target.value.toLowerCase().trim();
-  if (!query) {
-    categoryInput.value = '';
-    return;
-  }
-
-  let detectedCategory = '';
-  for (const [category, keywords] of Object.entries(categoryKeywords)) {
-    if (keywords.some(keyword => query.includes(keyword))) {
-      detectedCategory = category;
-      break;
-    }
-  }
-
-  if (detectedCategory) {
-    categoryInput.value = detectedCategory;
-  }
-});
-
-// Save snapshot to history stack
-function saveSnapshot() {
-  historyStack.push(JSON.stringify(listsData));
-  redoStack.length = 0; // Clear redo on new action
+// Toggle Sidebar
+if (toggleBtn && sidebar) {
+  toggleBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+  });
 }
 
-// Undo Action
+// Auto-Categorisation Listener
+if (itemNameInput && categoryInput) {
+  itemNameInput.addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase().trim();
+    if (!query) {
+      categoryInput.value = '';
+      return;
+    }
+
+    let detectedCategory = '';
+    for (const [category, keywords] of Object.entries(categoryKeywords)) {
+      if (keywords.some(keyword => query.includes(keyword))) {
+        detectedCategory = category;
+        break;
+      }
+    }
+
+    if (detectedCategory) {
+      categoryInput.value = detectedCategory;
+    }
+  });
+}
+
+function saveSnapshot() {
+  historyStack.push(JSON.stringify(listsData));
+  redoStack.length = 0;
+}
+
 function undoAction() {
   if (historyStack.length === 0) return;
   redoStack.push(JSON.stringify(listsData));
@@ -88,7 +89,6 @@ function undoAction() {
   renderList();
 }
 
-// Redo Action
 function redoAction() {
   if (redoStack.length === 0) return;
   historyStack.push(JSON.stringify(listsData));
@@ -97,60 +97,58 @@ function redoAction() {
   renderList();
 }
 
-// Switch active menu list
 function switchList(listName) {
   activeListName = listName;
-  headerTitle.textContent = listName;
-  formTitle.textContent = `Add New ${listName.replace(' List', '')} Item`;
-  submitBtn.textContent = `Add to ${listName}`;
+  if (headerTitle) headerTitle.textContent = listName;
+  if (formTitle) formTitle.textContent = `Add New ${listName.replace(' List', '')} Item`;
+  if (submitBtn) submitBtn.textContent = `Add to ${listName}`;
 
-  sidebar.classList.add('collapsed');
+  if (sidebar) sidebar.classList.add('collapsed');
 
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  if (listName === 'Grocery List') document.getElementById('navGrocery').classList.add('active');
-  if (listName === 'Costco List') document.getElementById('navCostco').classList.add('active');
-  if (listName === 'Pantry Inventory') document.getElementById('navPantry').classList.add('active');
-  if (listName === 'Recipe Planner') document.getElementById('navRecipes').classList.add('active');
+  if (listName === 'Grocery List' && document.getElementById('navGrocery')) document.getElementById('navGrocery').classList.add('active');
+  if (listName === 'Costco List' && document.getElementById('navCostco')) document.getElementById('navCostco').classList.add('active');
+  if (listName === 'Pantry Inventory' && document.getElementById('navPantry')) document.getElementById('navPantry').classList.add('active');
+  if (listName === 'Recipe Planner' && document.getElementById('navRecipes')) document.getElementById('navRecipes').classList.add('active');
 
   renderList();
 }
 
-// Set Active Tab (Active / Completed / Removed)
 function setTab(tabName) {
   currentTab = tabName;
-  document.getElementById('tabActive').classList.toggle('active', tabName === 'active');
-  document.getElementById('tabCompleted').classList.toggle('active', tabName === 'completed');
-  document.getElementById('tabRemoved').classList.toggle('active', tabName === 'removed');
+  if (document.getElementById('tabActive')) document.getElementById('tabActive').classList.toggle('active', tabName === 'active');
+  if (document.getElementById('tabCompleted')) document.getElementById('tabCompleted').classList.toggle('active', tabName === 'completed');
+  if (document.getElementById('tabRemoved')) document.getElementById('tabRemoved').classList.toggle('active', tabName === 'removed');
   renderList();
 }
 
-// Select category via chip
 function selectCategory(categoryName) {
-  categoryInput.value = categoryName;
+  if (categoryInput) categoryInput.value = categoryName;
 }
 
-// Add Custom Chip
 function addCustomChip() {
   const chipInput = document.getElementById('customChipInput');
+  if (!chipInput) return;
   const val = chipInput.value.trim();
   if (!val) return;
 
   const chipsContainer = document.getElementById('chipsContainer');
-  const newBtn = document.createElement('button');
-  newBtn.className = 'chip';
-  newBtn.textContent = val;
-  newBtn.onclick = () => selectCategory(val);
-
-  chipsContainer.appendChild(newBtn);
+  if (chipsContainer) {
+    const newBtn = document.createElement('button');
+    newBtn.className = 'chip';
+    newBtn.textContent = val;
+    newBtn.onclick = () => selectCategory(val);
+    chipsContainer.appendChild(newBtn);
+  }
   chipInput.value = '';
 }
 
-// Add Item to List
 function addItem() {
+  if (!itemNameInput) return;
   const name = itemNameInput.value.trim();
-  const category = categoryInput.value.trim() || '📦 Other';
-  const qty = parseInt(quantityInput.value) || 1;
-  const unit = unitSelect.value;
+  const category = (categoryInput ? categoryInput.value.trim() : '') || '📦 Other';
+  const qty = parseInt(quantityInput ? quantityInput.value : '1') || 1;
+  const unit = unitSelect ? unitSelect.value : 'pcs';
 
   if (!name) return;
 
@@ -162,17 +160,16 @@ function addItem() {
     category,
     quantity: qty,
     unit: unit,
-    status: 'active' // 'active', 'completed', 'removed'
+    status: 'active'
   });
 
   itemNameInput.value = '';
-  categoryInput.value = '';
-  quantityInput.value = '1';
+  if (categoryInput) categoryInput.value = '';
+  if (quantityInput) quantityInput.value = '1';
 
   renderList();
 }
 
-// Toggle Item Status
 function toggleStatus(id) {
   saveSnapshot();
   const item = listsData[activeListName].find(i => i.id === id);
@@ -182,7 +179,6 @@ function toggleStatus(id) {
   renderList();
 }
 
-// Move Item to Trash
 function removeItem(id) {
   saveSnapshot();
   const item = listsData[activeListName].find(i => i.id === id);
@@ -192,8 +188,8 @@ function removeItem(id) {
   renderList();
 }
 
-// Populate Category Filter Dropdown
 function updateFilterOptions() {
+  if (!filterCategory) return;
   const currentList = listsData[activeListName];
   const categories = [...new Set(currentList.map(item => item.category))];
   
@@ -206,29 +202,26 @@ function updateFilterOptions() {
   });
 }
 
-// Render Items to UI
 function renderList() {
+  if (!itemsList) return;
   const currentList = listsData[activeListName];
-  const searchQuery = searchInput.value.toLowerCase().trim();
-  const selectedCat = filterCategory.value;
+  const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+  const selectedCat = filterCategory ? filterCategory.value : 'ALL';
 
-  // Counts
   const activeItems = currentList.filter(i => i.status === 'active');
   const completedItems = currentList.filter(i => i.status === 'completed');
   const removedItems = currentList.filter(i => i.status === 'removed');
 
-  activeCount.textContent = activeItems.length;
-  completedCount.textContent = completedItems.length;
-  removedCount.textContent = removedItems.length;
+  if (activeCount) activeCount.textContent = activeItems.length;
+  if (completedCount) completedCount.textContent = completedItems.length;
+  if (removedCount) removedCount.textContent = removedItems.length;
 
-  // Update Stats Header
-  statTotal.textContent = currentList.length;
-  statCompleted.textContent = completedItems.length;
-  statCategories.textContent = new Set(currentList.map(i => i.category)).size;
+  if (statTotal) statTotal.textContent = currentList.length;
+  if (statCompleted) statCompleted.textContent = completedItems.length;
+  if (statCategories) statCategories.textContent = new Set(currentList.map(i => i.category)).size;
 
   updateFilterOptions();
 
-  // Filtering
   let filtered = currentList.filter(i => i.status === currentTab);
 
   if (searchQuery) {
@@ -268,10 +261,9 @@ function renderList() {
   });
 }
 
-// Share Placeholder
 function shareList() {
-  alert(`Sharing list link for "${activeListName}" copied to clipboard!`);
+  alert(`Sharing link for "${activeListName}" copied to clipboard!`);
 }
 
-// Initialize rendering on load
+// Initial Render
 renderList();
