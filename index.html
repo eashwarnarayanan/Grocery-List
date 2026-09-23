@@ -2,145 +2,607 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Grocery List App</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart List Manager</title>
+  <style>
+    :root {
+      --bg-main: #0c0e17;
+      --panel-bg: #151828;
+      --card-bg: #1c2035;
+      --input-bg: #121422;
+      --text-main: #ffffff;
+      --text-muted: #8b92b0;
+      --accent-blue: #5c82f6;
+      --accent-hover: #4a6ee0;
+      --chip-bg: #262b45;
+      --chip-hover: #333a5c;
+      --border-color: rgba(255, 255, 255, 0.08);
+    }
 
-  <!-- Firebase Compatibility SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
 
-  <script src="script.js" defer></script>
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* --- SIDEBAR & COLLAPSIBLE DRAWER --- */
+    .sidebar {
+      width: 260px;
+      background-color: var(--panel-bg);
+      border-right: 1px solid var(--border-color);
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      z-index: 10;
+    }
+
+    .sidebar.collapsed {
+      width: 64px;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      height: 64px;
+    }
+
+    /* Cart Icon Toggle Button */
+    .toggle-btn {
+      background: transparent;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      transition: background-color 0.2s;
+    }
+
+    .toggle-btn:hover {
+      background-color: var(--chip-bg);
+    }
+
+    .nav-list {
+      list-style: none;
+      padding: 12px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+
+    .nav-item:hover {
+      background-color: var(--chip-bg);
+      color: var(--text-main);
+    }
+
+    .nav-item.active {
+      background-color: var(--accent-blue);
+      color: var(--text-main);
+    }
+
+    .nav-icon {
+      font-size: 18px;
+      margin-right: 14px;
+      min-width: 24px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .sidebar.collapsed .nav-text {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* --- MAIN CONTENT AREA --- */
+    .main-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    /* Top Navigation Header */
+    .top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 32px;
+      background-color: var(--bg-main);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .header-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-title {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .live-badge {
+      font-size: 10px;
+      font-weight: 700;
+      background-color: #3b82f6;
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 10px;
+      letter-spacing: 0.5px;
+    }
+
+    .sub-tagline {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-secondary {
+      background-color: var(--chip-bg);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 6px 14px;
+      border-radius: 16px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .btn-primary-sm {
+      background-color: var(--accent-blue);
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 16px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .btn-danger-sm {
+      background-color: #ef4444;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 16px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    /* Application Card Container */
+    .app-container {
+      max-width: 800px;
+      margin: 24px auto;
+      width: 100%;
+      padding: 0 16px;
+    }
+
+    .app-card {
+      background-color: var(--panel-bg);
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Sub-header Tabs & Controls */
+    .tab-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .tab-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .tab-btn {
+      background-color: var(--chip-bg);
+      color: var(--text-muted);
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tab-btn.active {
+      background-color: var(--accent-blue);
+      color: white;
+    }
+
+    .count-pill {
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      padding: 0 6px;
+      font-size: 11px;
+    }
+
+    .history-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Form Section */
+    .form-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .field-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      display: block;
+      text-transform: uppercase;
+    }
+
+    .input-field {
+      width: 100%;
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: var(--text-main);
+      font-size: 14px;
+      margin-bottom: 16px;
+      outline: none;
+    }
+
+    .input-field:focus {
+      border-color: var(--accent-blue);
+    }
+
+    .info-tip {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: -8px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Quick Category Chips */
+    .chips-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .chip {
+      background-color: var(--chip-bg);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 13px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .chip:hover {
+      background-color: var(--chip-hover);
+    }
+
+    .chip.selected {
+      border-color: var(--accent-blue);
+      background-color: rgba(92, 130, 246, 0.2);
+    }
+
+    /* Custom Category Add Box */
+    .custom-category-box {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .custom-category-box input {
+      margin-bottom: 0;
+    }
+
+    /* Action Submit Button */
+    .btn-submit {
+      width: 100%;
+      background-color: var(--accent-blue);
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .btn-submit:hover {
+      background-color: var(--accent-hover);
+    }
+
+    /* Rendered Items List */
+    .items-list {
+      margin-top: 24px;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .list-item-row {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .item-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .item-category {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+  </style>
 </head>
-<body class="dark-theme">
+<body>
 
-  <!-- LOGIN CONTAINER -->
-  <div class="login-wrapper" id="login-container">
-    <div class="login-card">
-      <div class="brand-header">
-        <span class="icon">🛒</span>
-        <h2>Grocery List</h2>
-      </div>
-      <p class="login-subtext">Sign in to manage your smart grocery list</p>
-      
-      <div class="form-group">
-        <label>Username</label>
-        <input type="text" id="username" placeholder="Enter username" />
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="password" placeholder="Enter password" />
-      </div>
-      <button id="login-btn" class="primary-btn">Login</button>
+  <!-- Collapsible Side Drawer -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <!-- Shopping Cart Toggle Button -->
+      <button class="toggle-btn" id="toggleBtn" title="Toggle Sidebar">
+        🛒
+      </button>
     </div>
-  </div>
 
-  <!-- APP CONTAINER -->
-  <div class="app-wrapper" id="app-container" style="display: none;">
+    <ul class="nav-list">
+      <li class="nav-item active" id="navGrocery" onclick="switchList('Grocery List')">
+        <span class="nav-icon">📋</span>
+        <span class="nav-text">Grocery List</span>
+      </li>
+      <li class="nav-item" id="navCostco" onclick="switchList('Costco List')">
+        <span class="nav-icon">🏪</span>
+        <span class="nav-text">Costco List</span>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- Main View Container -->
+  <div class="main-wrapper">
     
-    <!-- TOP HEADER NAVBAR -->
-    <header class="app-header">
-      <div class="header-left">
-        <div class="logo-box">🛒</div>
-        <div class="title-box">
-          <h1>Grocery List <span class="badge-live">LIVE</span></h1>
-          <p class="subtitle">Smart Auto-Categorised</p>
+    <!-- Top Header -->
+    <header class="top-header">
+      <div>
+        <div class="header-title-group">
+          <h1 class="header-title" id="headerTitle">Grocery List</h1>
+          <span class="live-badge">LIVE</span>
         </div>
+        <p class="sub-tagline">Smart Auto-Categorised</p>
       </div>
-      <div class="header-right">
-        <div class="user-pill">
-          <span class="user-icon">👤</span>
-          <span id="user-display-name">ASWATHY</span>
-        </div>
-        <button id="theme-toggle-btn" class="pill-btn"><span id="theme-icon">🌙</span> <span id="theme-text">Dark</span></button>
-        <button id="share-btn" class="pill-btn accent-btn">🔗 Share</button>
-        <button id="logout-btn" class="pill-btn danger-btn">Sign Out</button>
+
+      <div class="top-actions">
+        <button class="btn-secondary">👤 ASWATHY</button>
+        <button class="btn-secondary">🌙 Dark</button>
+        <button class="btn-primary-sm">🔗 Share</button>
+        <button class="btn-danger-sm">Sign Out</button>
       </div>
     </header>
 
-    <!-- MAIN CARD CONTAINER -->
-    <main class="main-card">
-      
-      <!-- NAVIGATION TABS & ACTIONS -->
-      <div class="tabs-header">
-        <div class="tab-group">
-          <button class="tab-btn active" id="tab-active">Active List <span class="badge-count" id="active-count">0</span></button>
-          <button class="tab-btn" id="tab-add">+ Add Item</button>
-          <button class="tab-btn" id="tab-removed">⚪ Removed <span class="badge-count" id="removed-count">0</span></button>
+    <!-- Main Form & Content -->
+    <div class="app-container">
+      <div class="app-card">
+        
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+          <div class="tab-group">
+            <button class="tab-btn active">
+              Active List <span class="count-pill" id="activeCount">0</span>
+            </button>
+            <button class="tab-btn">
+              + Add Item
+            </button>
+            <button class="tab-btn">
+              ⚪ Removed <span class="count-pill">0</span>
+            </button>
+          </div>
+
+          <div class="history-controls">
+            <button class="btn-secondary">⤺ Undo</button>
+            <button class="btn-secondary">⤿ Redo</button>
+          </div>
         </div>
-        <div class="history-actions">
-          <button id="undo-btn" class="icon-btn" title="Undo">↩ Undo</button>
-          <button id="redo-btn" class="icon-btn" title="Redo">↪ Redo</button>
+
+        <!-- Add Item Form -->
+        <h2 class="form-title" id="formTitle">Add New Grocery Item</h2>
+
+        <label class="field-label">ITEM NAME</label>
+        <input type="text" class="input-field" id="itemNameInput" placeholder="e.g. Puff pastry, Apples, Milk..." />
+
+        <label class="field-label">CATEGORY (AUTO-DETECTED OR CUSTOM)</label>
+        <input type="text" class="input-field" id="categoryInput" placeholder="e.g. 🥐 Bakery" />
+
+        <div class="info-tip">
+          💡 Quick select or type a custom category to teach the app!
         </div>
+
+        <label class="field-label">QUICK CATEGORIES</label>
+        <div class="chips-grid">
+          <button class="chip" onclick="selectCategory('🥦 Produce')">🥦 Produce</button>
+          <button class="chip" onclick="selectCategory('🧀 Dairy')">🧀 Dairy</button>
+          <button class="chip" onclick="selectCategory('🥐 Bakery')">🥐 Bakery</button>
+          <button class="chip" onclick="selectCategory('🥩 Meat & Seafood')">🥩 Meat & Seafood</button>
+          <button class="chip" onclick="selectCategory('🍿 Snacks')">🍿 Snacks</button>
+          <button class="chip" onclick="selectCategory('🧃 Drinks')">🧃 Drinks</button>
+          <button class="chip" onclick="selectCategory('❄️ Frozen')">❄️ Frozen</button>
+          <button class="chip" onclick="selectCategory('🧹 Household')">🧹 Household</button>
+          <button class="chip" onclick="selectCategory('🥫 Pantry')">🥫 Pantry</button>
+          <button class="chip" onclick="selectCategory('🍛 Indian Store')">🍛 Indian Store</button>
+        </div>
+
+        <label class="field-label">ADD CUSTOM CATEGORY CHIP</label>
+        <div class="custom-category-box">
+          <input type="text" class="input-field" id="customChipInput" placeholder="e.g. 🐾 Pet Supplies" />
+          <button class="btn-secondary" style="border-radius: 8px; padding: 0 20px;" onclick="addCustomChip()">Add</button>
+        </div>
+
+        <button class="btn-submit" id="submitBtn" onclick="addItem()">Add to Grocery List</button>
+
+        <!-- Displayed List Container -->
+        <ul class="items-list" id="itemsList"></ul>
+
       </div>
-
-      <!-- VIEW 1: ACTIVE LIST VIEW -->
-      <section id="view-active-list">
-        <div class="filter-bar-container">
-          <label class="sub-label">FILTER BY CATEGORY</label>
-          <div class="category-bar" id="category-bar">
-            <button class="category-btn active" data-category="All">All</button>
-          </div>
-        </div>
-
-        <ul id="grocery-list" class="grocery-items-list"></ul>
-      </section>
-
-      <!-- VIEW 2: ADD ITEM FORM VIEW -->
-      <section id="view-add-item" style="display: none;">
-        <h2 class="section-title">Add New Grocery Item</h2>
-
-        <!-- ITEM NAME INPUT -->
-        <div class="field-group">
-          <label>Item Name</label>
-          <input type="text" id="item-input" placeholder="e.g. Puff pastry, Apples, Milk..." />
-        </div>
-
-        <!-- CATEGORY INPUT -->
-        <div class="field-group">
-          <label>Category (Auto-detected or custom)</label>
-          <input type="text" id="category-input" placeholder="e.g. 🥐 Bakery" />
-          <p class="field-hint">💡 Quick select or type a custom category to teach the app!</p>
-        </div>
-
-        <!-- QUICK CATEGORIES CHIPS -->
-        <div class="category-section">
-          <label class="sub-label">QUICK CATEGORIES</label>
-          <div class="chips-grid" id="quick-categories-grid">
-            <button class="chip-btn" data-cat="Produce">🥦 Produce</button>
-            <button class="chip-btn" data-cat="Dairy">🧀 Dairy</button>
-            <button class="chip-btn" data-cat="Bakery">🥐 Bakery</button>
-            <button class="chip-btn" data-cat="Meat & Seafood">🥩 Meat & Seafood</button>
-            <button class="chip-btn" data-cat="Snacks">🍿 Snacks</button>
-            <button class="chip-btn" data-cat="Drinks">🧃 Drinks</button>
-            <button class="chip-btn" data-cat="Frozen">❄️ Frozen</button>
-            <button class="chip-btn" data-cat="Household">🧹 Household</button>
-            <button class="chip-btn" data-cat="Pantry">🥫 Pantry</button>
-            <button class="chip-btn" data-cat="Indian Store">🍲 Indian Store</button>
-          </div>
-        </div>
-
-        <!-- ADD CUSTOM CATEGORY CHIP -->
-        <div class="custom-chip-section">
-          <label class="sub-label">ADD CUSTOM CATEGORY CHIP</label>
-          <div class="input-with-button">
-            <input type="text" id="custom-chip-input" placeholder="e.g. 🐾 Pet Supplies" />
-            <button id="add-chip-btn" class="secondary-btn">Add</button>
-          </div>
-        </div>
-
-        <!-- MAIN SUBMIT BUTTON -->
-        <button id="add-btn" class="submit-list-btn">Add to Grocery List</button>
-      </section>
-
-      <!-- VIEW 3: REMOVED ITEMS VIEW -->
-      <section id="view-removed-list" style="display: none;">
-        <h2 class="section-title">Removed / Completed Items</h2>
-        <ul id="removed-list" class="grocery-items-list"></ul>
-      </section>
-
-    </main>
+    </div>
   </div>
 
+  <script>
+    // App State Storage
+    const listsData = {
+      'Grocery List': [],
+      'Costco List': []
+    };
+
+    let activeListName = 'Grocery List';
+
+    // DOM Elements
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const headerTitle = document.getElementById('headerTitle');
+    const formTitle = document.getElementById('formTitle');
+    const submitBtn = document.getElementById('submitBtn');
+    const itemNameInput = document.getElementById('itemNameInput');
+    const categoryInput = document.getElementById('categoryInput');
+    const activeCount = document.getElementById('activeCount');
+    const itemsList = document.getElementById('itemsList');
+
+    // Toggle Collapsible Drawer
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+    });
+
+    // Switch active view between Grocery List and Costco List
+    function switchList(listName) {
+      activeListName = listName;
+      headerTitle.textContent = listName;
+      formTitle.textContent = `Add New ${listName === 'Grocery List' ? 'Grocery' : 'Costco'} Item`;
+      submitBtn.textContent = `Add to ${listName}`;
+
+      // Collapse sidebar upon selecting an item
+      sidebar.classList.add('collapsed');
+
+      // Update Nav active styling
+      document.getElementById('navGrocery').classList.toggle('active', listName === 'Grocery List');
+      document.getElementById('navCostco').classList.toggle('active', listName === 'Costco List');
+
+      renderList();
+    }
+
+    // Select category from chip
+    function selectCategory(categoryName) {
+      categoryInput.value = categoryName;
+    }
+
+    // Add custom chip dynamically
+    function addCustomChip() {
+      const chipInput = document.getElementById('customChipInput');
+      const val = chipInput.value.trim();
+      if (!val) return;
+
+      const chipsGrid = document.querySelector('.chips-grid');
+      const newBtn = document.createElement('button');
+      newBtn.className = 'chip';
+      newBtn.textContent = val;
+      newBtn.onclick = () => selectCategory(val);
+
+      chipsGrid.appendChild(newBtn);
+      chipInput.value = '';
+    }
+
+    // Add Item to current Active List
+    function addItem() {
+      const name = itemNameInput.value.trim();
+      const category = categoryInput.value.trim() || 'Uncategorized';
+
+      if (!name) return;
+
+      listsData[activeListName].push({ name, category });
+
+      itemNameInput.value = '';
+      categoryInput.value = '';
+
+      renderList();
+    }
+
+    // Render active list items
+    function renderList() {
+      const currentList = listsData[activeListName];
+      activeCount.textContent = currentList.length;
+      itemsList.innerHTML = '';
+
+      currentList.forEach((item) => {
+        const li = document.createElement('li');
+        li.className = 'list-item-row';
+        li.innerHTML = `
+          <div class="item-info">
+            <span class="item-name">${item.name}</span>
+            <span class="item-category">${item.category}</span>
+          </div>
+        `;
+        itemsList.appendChild(li);
+      });
+    }
+  </script>
 </body>
 </html>
