@@ -12,41 +12,130 @@
 
   <script src="script.js" defer></script>
 </head>
-<body>
-  <!-- Login Container -->
-  <div class="login-container" id="login-container">
-    <h2>Login</h2>
-    <input type="text" id="username" placeholder="Username" />
-    <input type="password" id="password" placeholder="Password" />
-    <button id="login-btn">Login</button>
+<body class="dark-theme">
+
+  <!-- LOGIN CONTAINER -->
+  <div class="login-wrapper" id="login-container">
+    <div class="login-card">
+      <div class="brand-header">
+        <span class="icon">🛒</span>
+        <h2>Grocery List</h2>
+      </div>
+      <p class="login-subtext">Sign in to manage your smart grocery list</p>
+      
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="username" placeholder="Enter username" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="Enter password" />
+      </div>
+      <button id="login-btn" class="primary-btn">Login</button>
+    </div>
   </div>
 
-  <!-- App Container -->
-  <div class="container" id="app-container" style="display: none;">
-    <h1>Grocery List 🛒</h1>
+  <!-- APP CONTAINER -->
+  <div class="app-wrapper" id="app-container" style="display: none;">
+    
+    <!-- TOP HEADER NAVBAR -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo-box">🛒</div>
+        <div class="title-box">
+          <h1>Grocery List <span class="badge-live">LIVE</span></h1>
+          <p class="subtitle">Smart Auto-Categorised</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="user-pill">
+          <span class="user-icon">👤</span>
+          <span id="user-display-name">ASWATHY</span>
+        </div>
+        <button id="theme-toggle-btn" class="pill-btn"><span class="moon-icon">🌙</span> Dark</button>
+        <button id="share-btn" class="pill-btn accent-btn">🔗 Share</button>
+        <button id="logout-btn" class="pill-btn danger-btn">Sign Out</button>
+      </div>
+    </header>
 
-    <!-- Top Action Buttons -->
-    <div class="top-actions">
-      <button id="undo-btn">Undo</button>
-      <button id="redo-btn">Redo</button>
-      <button id="share-btn">Share</button>
-      <button id="logout-btn">Logout</button>
-    </div>
+    <!-- MAIN CARD CONTAINER -->
+    <main class="main-card">
+      
+      <!-- NAVIGATION TABS & ACTIONS -->
+      <div class="tabs-header">
+        <div class="tab-group">
+          <button class="tab-btn active" id="tab-active">Active List <span class="badge-count" id="active-count">0</span></button>
+          <button class="tab-btn" id="tab-add">+ Add Item</button>
+          <button class="tab-btn" id="tab-removed">⚪ Removed</button>
+        </div>
+        <div class="history-actions">
+          <button id="undo-btn" class="icon-btn" title="Undo">↩ Undo</button>
+          <button id="redo-btn" class="icon-btn" title="Redo">↪ Redo</button>
+        </div>
+      </div>
 
-    <!-- Add Item Section -->
-    <div class="input-container">
-      <input type="text" id="item-input" placeholder="Add an item (e.g. Milk, Apples)..." />
-      <input type="text" id="category-input" placeholder="Category (optional)" />
-      <button id="add-btn">Add Item</button>
-    </div>
+      <hr class="divider" />
 
-    <!-- Category Filter Bar -->
-    <div class="category-bar" id="category-bar">
-      <button class="category-btn active" data-category="All">All</button>
-    </div>
+      <!-- SECTION TITLE -->
+      <h2 class="section-title">Add New Grocery Item</h2>
 
-    <!-- List Items -->
-    <ul id="grocery-list"></ul>
+      <!-- ITEM NAME INPUT -->
+      <div class="field-group">
+        <label>Item Name</label>
+        <input type="text" id="item-input" placeholder="e.g. Puff pastry, Apples, Milk..." />
+      </div>
+
+      <!-- CATEGORY INPUT -->
+      <div class="field-group">
+        <label>Category (Auto-detected or custom)</label>
+        <input type="text" id="category-input" placeholder="e.g. 🥐 Bakery" />
+        <p class="field-hint">💡 Quick select or type a custom category to teach the app!</p>
+      </div>
+
+      <!-- QUICK CATEGORIES CHIPS -->
+      <div class="category-section">
+        <label class="sub-label">QUICK CATEGORIES</label>
+        <div class="chips-grid" id="quick-categories-grid">
+          <button class="chip-btn" data-cat="Produce">🥦 Produce</button>
+          <button class="chip-btn" data-cat="Dairy">🧀 Dairy</button>
+          <button class="chip-btn" data-cat="Bakery">🥐 Bakery</button>
+          <button class="chip-btn" data-cat="Meat & Seafood">🥩 Meat & Seafood</button>
+          <button class="chip-btn" data-cat="Snacks">🍿 Snacks</button>
+          <button class="chip-btn" data-cat="Drinks">🧃 Drinks</button>
+          <button class="chip-btn" data-cat="Frozen">❄️ Frozen</button>
+          <button class="chip-btn" data-cat="Household">🧹 Household</button>
+          <button class="chip-btn" data-cat="Pantry">🥫 Pantry</button>
+          <button class="chip-btn" data-cat="Indian Store">🍲 Indian Store</button>
+        </div>
+      </div>
+
+      <!-- ADD CUSTOM CATEGORY CHIP -->
+      <div class="custom-chip-section">
+        <label class="sub-label">ADD CUSTOM CATEGORY CHIP</label>
+        <div class="input-with-button">
+          <input type="text" id="custom-chip-input" placeholder="e.g. 🐾 Pet Supplies" />
+          <button id="add-chip-btn" class="secondary-btn">Add</button>
+        </div>
+      </div>
+
+      <!-- MAIN SUBMIT BUTTON -->
+      <button id="add-btn" class="submit-list-btn">Add to Grocery List</button>
+
+      <hr class="divider" />
+
+      <!-- FILTER BAR FOR LIST -->
+      <div class="filter-bar-container">
+        <label class="sub-label">FILTER BY CATEGORY</label>
+        <div class="category-bar" id="category-bar">
+          <button class="category-btn active" data-category="All">All</button>
+        </div>
+      </div>
+
+      <!-- GROCERY ITEMS LIST -->
+      <ul id="grocery-list" class="grocery-items-list"></ul>
+
+    </main>
   </div>
+
 </body>
 </html>
