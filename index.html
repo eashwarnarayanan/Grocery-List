@@ -3,138 +3,51 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Smart Grocery List</title>
+  <title>Grocery List</title>
   <link rel="stylesheet" href="styles.css" />
+  
+  <!-- Firebase Compatibility SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+  <script src="script.js" defer></script>
 </head>
 <body>
-
-  <!-- AUTHENTICATION MODAL -->
-  <div id="authModal" class="auth-overlay">
-    <div class="auth-card">
-      <div class="logo-badge">🛒</div>
-      <h2>Welcome Back</h2>
-      <p class="auth-sub">Sign in to sync your grocery list</p>
-      
-      <form id="authForm">
-        <div class="form-group">
-          <label for="authUsername">Username</label>
-          <input type="text" id="authUsername" placeholder="Enter your name..." required />
-        </div>
-        <div class="form-group">
-          <label for="authPassword">Password</label>
-          <input type="password" id="authPassword" placeholder="••••••••" required />
-        </div>
-        <button type="submit" class="btn-primary width-full">Sign In</button>
-      </form>
+  <!-- Login Container -->
+  <div id="loginContainer" class="auth-card">
+    <h2>Welcome Back 👋</h2>
+    <p>Sign in to sync your grocery list across devices</p>
+    <div class="input-group">
+      <input type="text" id="usernameInput" placeholder="Username" autocomplete="off" />
+      <input type="password" id="passwordInput" placeholder="Password" />
+      <button id="loginBtn">Sign In</button>
     </div>
+    <p id="loginError" class="error-msg" style="display: none;"></p>
   </div>
 
-  <!-- MAIN APP CONTAINER -->
-  <div id="appContainer" class="app-wrapper hidden">
-    
-    <!-- NAVBAR -->
-    <header class="navbar">
-      <div class="brand">
-        <span class="brand-icon">🛒</span>
-        <div>
-          <div class="brand-title">
-            Grocery List <span class="badge-live">LIVE</span>
-          </div>
-          <div class="brand-sub">Smart Auto-Categorised</div>
-        </div>
-      </div>
-
-      <div class="nav-controls">
-        <span id="userGreeting" class="user-pill">👤 User</span>
-        <button id="themeToggleBtn" class="pill-btn">🌙 Dark</button>
-        <button id="shareBtn" class="pill-btn btn-purple">🔗 Share</button>
-        <button id="signOutBtn" class="pill-btn btn-danger">Sign Out</button>
+  <!-- Main App Container -->
+  <div id="appContainer" class="app-card" style="display: none;">
+    <header class="app-header">
+      <h1>Grocery List 🛒</h1>
+      <div class="header-actions">
+        <button id="undoBtn" title="Undo">↩️ Undo</button>
+        <button id="redoBtn" title="Redo">↪️ Redo</button>
+        <button id="shareBtn" title="Share List">📋 Share</button>
+        <button id="logoutBtn" title="Logout">Logout</button>
       </div>
     </header>
 
-    <!-- MAIN CONTAINER CARD -->
-    <main class="main-card">
-      
-      <!-- TAB NAVIGATION -->
-      <nav class="tab-bar">
-        <button class="tab-btn active" data-tab="active">
-          Active List <span id="itemCountBadge" class="badge-count">0</span>
-        </button>
-        <button class="tab-btn" data-tab="add">➕ Add Item</button>
-        <button class="tab-btn" data-tab="removed">🕒 Removed</button>
-      </nav>
+    <div class="add-item-form">
+      <input type="text" id="itemInput" placeholder="Add an item (e.g. Milk, Apples)..." autocomplete="off" />
+      <input type="text" id="categoryInput" placeholder="Category (optional)" autocomplete="off" />
+      <button id="addItemBtn">Add Item</button>
+    </div>
 
-      <!-- TAB 1: ACTIVE SHOPPING LIST -->
-      <section id="tab-active" class="tab-content active">
-        <div class="list-actions-bar">
-          <span class="sub-label">Shopping Items</span>
-          <div class="action-btn-group">
-            <button id="undoBtn" class="pill-btn" disabled>↩️ Undo</button>
-            <button id="redoBtn" class="pill-btn" disabled>↪️ Redo</button>
-          </div>
-        </div>
+    <div class="filter-bar">
+      <button class="filter-chip active" data-category="All">All</button>
+    </div>
 
-        <div id="shoppingListContainer">
-          <p class="empty-msg">Your shopping list is empty!</p>
-        </div>
-      </section>
-
-      <!-- TAB 2: ADD ITEM FORM -->
-      <section id="tab-add" class="tab-content">
-        <h3 class="section-title">Add New Grocery Item</h3>
-        
-        <form id="addItemForm">
-          <div class="form-group">
-            <label for="itemName">Item Name</label>
-            <input type="text" id="itemName" placeholder="e.g. Puff pastry, Apples, Milk..." required autocomplete="off" />
-          </div>
-
-          <div class="form-group">
-            <label for="itemCategory">Category (Auto-detected or custom)</label>
-            <input type="text" id="itemCategory" placeholder="e.g. 🍞 Bakery" />
-          </div>
-
-          <p class="tip-text">💡 Quick select or type a custom category to teach the app!</p>
-
-          <!-- QUICK CATEGORY CHIPS -->
-          <div class="sub-label">Quick Categories</div>
-          <div id="quickCatChips" class="cat-chips">
-            <button type="button" class="chip" data-cat="🥦 Produce">🥦 Produce</button>
-            <button type="button" class="chip" data-cat="🧀 Dairy">🧀 Dairy</button>
-            <button type="button" class="chip" data-cat="🍞 Bakery">🍞 Bakery</button>
-            <button type="button" class="chip" data-cat="🥩 Meat & Seafood">🥩 Meat & Seafood</button>
-            <button type="button" class="chip" data-cat="🍿 Snacks">🍿 Snacks</button>
-            <button type="button" class="chip" data-cat="🥤 Drinks">🥤 Drinks</button>
-            <button type="button" class="chip" data-cat="❄️ Frozen">❄️ Frozen</button>
-            <button type="button" class="chip" data-cat="🧹 Household">🧹 Household</button>
-            <button type="button" class="chip" data-cat="🥫 Pantry">🥫 Pantry</button>
-            <button type="button" class="chip" data-cat="🇮🇳 Indian Store">🇮🇳 Indian Store</button>
-          </div>
-
-          <!-- CREATE CUSTOM CATEGORY -->
-          <div class="custom-cat-box">
-            <div class="sub-label">Add Custom Category Chip</div>
-            <div class="input-inline">
-              <input type="text" id="customCatInput" placeholder="e.g. 🐾 Pet Supplies" />
-              <button type="button" id="createCatBtn" class="btn-secondary">Add</button>
-            </div>
-          </div>
-
-          <button type="submit" class="btn-primary width-full" style="margin-top: 1.5rem;">Add to Grocery List</button>
-        </form>
-      </section>
-
-      <!-- TAB 3: REMOVED ITEMS HISTORY -->
-      <section id="tab-removed" class="tab-content">
-        <h3 class="section-title">Recently Removed & Bought Items</h3>
-        <div id="recentlyRemovedContainer">
-          <p class="empty-msg">No removed items yet.</p>
-        </div>
-      </section>
-
-    </main>
+    <ul id="groceryList" class="item-list"></ul>
   </div>
-
-  <script src="script.js"></script>
 </body>
 </html>
