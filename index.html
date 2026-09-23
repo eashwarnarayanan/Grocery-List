@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Grocery List</title>
+  <title>Grocery List App</title>
   <link rel="stylesheet" href="styles.css" />
-  
+
   <!-- Firebase Compatibility SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -14,40 +14,39 @@
 </head>
 <body>
   <!-- Login Container -->
-  <div id="loginContainer" class="auth-card">
-    <h2>Welcome Back 👋</h2>
-    <p>Sign in to sync your grocery list across devices</p>
-    <div class="input-group">
-      <input type="text" id="usernameInput" placeholder="Username" autocomplete="off" />
-      <input type="password" id="passwordInput" placeholder="Password" />
-      <button id="loginBtn">Sign In</button>
-    </div>
-    <p id="loginError" class="error-msg" style="display: none;"></p>
+  <div class="login-container" id="login-container">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="password" placeholder="Password" />
+    <button id="login-btn">Login</button>
   </div>
 
-  <!-- Main App Container -->
-  <div id="appContainer" class="app-card" style="display: none;">
-    <header class="app-header">
-      <h1>Grocery List 🛒</h1>
-      <div class="header-actions">
-        <button id="undoBtn" title="Undo">↩️ Undo</button>
-        <button id="redoBtn" title="Redo">↪️ Redo</button>
-        <button id="shareBtn" title="Share List">📋 Share</button>
-        <button id="logoutBtn" title="Logout">Logout</button>
-      </div>
-    </header>
+  <!-- App Container -->
+  <div class="container" id="app-container" style="display: none;">
+    <h1>Grocery List 🛒</h1>
 
-    <div class="add-item-form">
-      <input type="text" id="itemInput" placeholder="Add an item (e.g. Milk, Apples)..." autocomplete="off" />
-      <input type="text" id="categoryInput" placeholder="Category (optional)" autocomplete="off" />
-      <button id="addItemBtn">Add Item</button>
+    <!-- Top Action Buttons -->
+    <div class="top-actions">
+      <button id="undo-btn">Undo</button>
+      <button id="redo-btn">Redo</button>
+      <button id="share-btn">Share</button>
+      <button id="logout-btn">Logout</button>
     </div>
 
-    <div class="filter-bar">
-      <button class="filter-chip active" data-category="All">All</button>
+    <!-- Add Item Section -->
+    <div class="input-container">
+      <input type="text" id="item-input" placeholder="Add an item (e.g. Milk, Apples)..." />
+      <input type="text" id="category-input" placeholder="Category (optional)" />
+      <button id="add-btn">Add Item</button>
     </div>
 
-    <ul id="groceryList" class="item-list"></ul>
+    <!-- Category Filter Bar -->
+    <div class="category-bar" id="category-bar">
+      <button class="category-btn active" data-category="All">All</button>
+    </div>
+
+    <!-- List Items -->
+    <ul id="grocery-list"></ul>
   </div>
 </body>
 </html>
