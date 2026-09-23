@@ -1,5 +1,5 @@
 /* ==========================================
-   GLOBAL RESET & DARK THEME SETUP (Pic 2)
+   GLOBAL RESET & THEMING SETUP
    ========================================== */
 * {
   box-sizing: border-box;
@@ -21,14 +21,22 @@
   --accent-blue: #70a1ff;
   --pill-bg: #2b2b4d;
   --pill-hover: #3b3b66;
-  --badge-live-bg: #40407a;
-  --badge-live-text: #70a1ff;
-  --danger-bg: #ff4757;
-  --danger-hover: #ff6b81;
-  --success-bg: #2ed573;
 }
 
-body.dark-theme {
+body.light-theme {
+  --bg-gradient: linear-gradient(135deg, #f0f3f8 0%, #dbe2ef 100%);
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --input-bg: #f8fafc;
+  --input-border: #cbd5e1;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-hint: #94a3b8;
+  --pill-bg: #e2e8f0;
+  --pill-hover: #cbd5e1;
+}
+
+body {
   background: var(--bg-gradient);
   min-height: 100vh;
   color: var(--text-main);
@@ -36,6 +44,7 @@ body.dark-theme {
   justify-content: center;
   align-items: flex-start;
   padding: 30px 15px;
+  transition: background 0.3s ease;
 }
 
 /* ==========================================
@@ -52,7 +61,7 @@ body.dark-theme {
   border: 1px solid var(--card-border);
   border-radius: 16px;
   padding: 32px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
 }
 
 .brand-header {
@@ -132,7 +141,7 @@ body.dark-theme {
 }
 
 /* ==========================================
-   APP HEADER & NAVIGATION (Pic 2 Layout)
+   APP HEADER & NAVIGATION
    ========================================== */
 .app-wrapper {
   width: 100%;
@@ -226,6 +235,7 @@ body.dark-theme {
 
 .accent-btn {
   background: #5f52d5;
+  color: white;
   border: none;
 }
 
@@ -244,22 +254,23 @@ body.dark-theme {
 }
 
 /* ==========================================
-   MAIN DASHBOARD CARD (Pic 2 Frame)
+   MAIN DASHBOARD CARD & TABS
    ========================================== */
 .main-card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: 20px;
   padding: 24px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
 }
 
-/* Tabs & Top Actions */
 .tabs-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .tab-group {
@@ -274,7 +285,7 @@ body.dark-theme {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  padding: 6px 16px;
+  padding: 8px 18px;
   border-radius: 18px;
   font-size: 13px;
   font-weight: 600;
@@ -282,6 +293,7 @@ body.dark-theme {
   display: flex;
   align-items: center;
   gap: 6px;
+  transition: all 0.2s;
 }
 
 .tab-btn.active {
@@ -315,12 +327,6 @@ body.dark-theme {
   background: var(--pill-hover);
 }
 
-.divider {
-  border: none;
-  border-top: 1px solid var(--card-border);
-  margin: 20px 0;
-}
-
 .section-title {
   font-size: 18px;
   font-weight: 700;
@@ -342,7 +348,6 @@ body.dark-theme {
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.6px;
-
 }
 
 .field-hint {
@@ -375,8 +380,7 @@ body.dark-theme {
   transition: all 0.2s;
 }
 
-.chip-btn:hover,
-.chip-btn.selected {
+.chip-btn:hover {
   background: var(--pill-hover);
   border-color: var(--accent-purple);
 }
@@ -483,12 +487,10 @@ body.dark-theme {
   border-color: var(--accent-purple);
 }
 
-.grocery-items-list li.completed {
-  opacity: 0.5;
-}
-
-.grocery-items-list li.completed .item-text {
-  text-decoration: line-through;
+.item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .item-text {
@@ -498,20 +500,24 @@ body.dark-theme {
 .item-cat-tag {
   font-size: 11px;
   color: var(--text-muted);
-  margin-left: 8px;
   background: var(--card-bg);
   padding: 2px 8px;
   border-radius: 6px;
 }
 
-.delete-btn {
+.delete-btn, .restore-btn {
   background: transparent;
   border: none;
   color: var(--text-muted);
   cursor: pointer;
   font-size: 14px;
+  padding: 4px;
 }
 
 .delete-btn:hover {
-  color: var(--danger-hover);
+  color: #ff4757;
+}
+
+.restore-btn:hover {
+  color: #2ed573;
 }
