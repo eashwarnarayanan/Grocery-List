@@ -19,6 +19,7 @@ const database = firebase.database();
 // 2. STATE MANAGEMENT
 // ==========================================
 let currentItems = [];
+let removedItems = [];
 let categoryMap = JSON.parse(localStorage.getItem("categoryMap")) || {
   milk: "Dairy",
   cheese: "Dairy",
@@ -53,12 +54,26 @@ const loginBtn = document.getElementById("login-btn");
 const logoutBtn = document.getElementById("logout-btn");
 const userDisplayName = document.getElementById("user-display-name");
 
+const themeToggleBtn = document.getElementById("theme-toggle-btn");
+const themeIcon = document.getElementById("theme-icon");
+const themeText = document.getElementById("theme-text");
+
+const tabActive = document.getElementById("tab-active");
+const tabAdd = document.getElementById("tab-add");
+const tabRemoved = document.getElementById("tab-removed");
+
+const viewActiveList = document.getElementById("view-active-list");
+const viewAddItem = document.getElementById("view-add-item");
+const viewRemovedList = document.getElementById("view-removed-list");
+
 const itemInput = document.getElementById("item-input");
 const categoryInput = document.getElementById("category-input");
 const addBtn = document.getElementById("add-btn");
 const groceryList = document.getElementById("grocery-list");
+const removedList = document.getElementById("removed-list");
 const categoryBar = document.getElementById("category-bar");
 const activeCount = document.getElementById("active-count");
+const removedCount = document.getElementById("removed-count");
 
 const quickCategoriesGrid = document.getElementById("quick-categories-grid");
 const customChipInput = document.getElementById("custom-chip-input");
@@ -109,7 +124,49 @@ logoutBtn.addEventListener("click", () => {
 });
 
 // ==========================================
-// 5. FIREBASE REAL-TIME SYNC
+// 5. TAB SWITCHING LOGIC (Fixes overlap issue)
+// ==========================================
+function switchTab(selectedTab) {
+  tabActive.classList.remove("active");
+  tabAdd.classList.remove("active");
+  tabRemoved.classList.remove("active");
+
+  viewActiveList.style.display = "none";
+  viewAddItem.style.display = "none";
+  viewRemovedList.style.display = "none";
+
+  if (selectedTab === "active") {
+    tabActive.classList.add("active");
+    viewActiveList.style.display = "block";
+  } else if (selectedTab === "add") {
+    tabAdd.classList.add("active");
+    viewAddItem.style.display = "block";
+  } else if (selectedTab === "removed") {
+    tabRemoved.classList.add("active");
+    viewRemovedList.style.display = "block";
+  }
+}
+
+tabActive.addEventListener("click", () => switchTab("active"));
+tabAdd.addEventListener("click", () => switchTab("add"));
+tabRemoved.addEventListener("click", () => switchTab("removed"));
+
+// Theme Toggle
+themeToggleBtn.addEventListener("click", () => {
+  document.body.classList.toggle("light-theme");
+  document.body.classList.toggle("dark-theme");
+
+  if (document.body.classList.contains("light-theme")) {
+    themeIcon.textContent = "☀️";
+    themeText.textContent = "Light";
+  } else {
+    themeIcon.textContent = "🌙";
+    themeText.textContent = "Dark";
+  }
+});
+
+// ==========================================
+// 6. FIREBASE REAL-TIME SYNC
 // ==========================================
 function listenToFirebaseUpdates() {
   if (!currentUser) return;
@@ -120,30 +177,36 @@ function listenToFirebaseUpdates() {
   listRef.on("value", (snapshot) => {
     const data = snapshot.val();
     currentItems = data && data.items ? data.items : [];
+    removedItems = data && data.removed ? data.removed : [];
     renderList();
     renderCategoryFilters();
   });
 }
 
-function syncToFirebase(items) {
+function syncToFirebase(items, removed) {
   if (!currentUser) return;
 
   const safeUser = currentUser.toLowerCase().trim().replace(/[.#$\[\]]/g, "_");
   database.ref("lists/" + safeUser).set({
     items: items,
+    removed: removed,
     updatedAt: Date.now()
   });
 }
 
-function updateItemsAndSync(newItems) {
-  undoStack.push(JSON.parse(JSON.stringify(currentItems)));
+function updateItemsAndSync(newItems, newRemoved = removedItems) {
+  undoStack.push({
+    items: JSON.parse(JSON.stringify(currentItems)),
+    removed: JSON.parse(JSON.stringify(removedItems))
+  });
   redoStack = [];
   currentItems = newItems;
-  syncToFirebase(currentItems);
+  removedItems = newRemoved;
+  syncToFirebase(currentItems, removedItems);
 }
 
 // ==========================================
-// 6. ITEM & CATEGORY CHIP MANAGEMENT
+// 7. ITEM & CHIP MANAGEMENT
 // ==========================================
 function addItem() {
   const name = itemInput.value.trim();
@@ -172,29 +235,39 @@ function addItem() {
   const newItem = {
     id: Date.now().toString(),
     name: name,
-    category: category,
-    completed: false
+    category: category
   };
 
-  updateItemsAndSync([...currentItems, newItem]);
+  updateItemsAndSync([...currentItems, newItem], removedItems);
 
   itemInput.value = "";
   categoryInput.value = "";
-}
 
-function toggleItem(id) {
-  const updated = currentItems.map((item) =>
-    item.id === id ? { ...item, completed: !item.completed } : item
-  );
-  updateItemsAndSync(updated);
+  // Switch back to Active List view after adding
+  switchTab("active");
 }
 
 function removeItem(id) {
-  const updated = currentItems.filter((item) => item.id !== id);
-  updateItemsAndSync(updated);
+  const itemToRemove = currentItems.find((item) => item.id === id);
+  if (!itemToRemove) return;
+
+  const updatedActive = currentItems.filter((item) => item.id !== id);
+  const updatedRemoved = [...removedItems, itemToRemove];
+
+  updateItemsAndSync(updatedActive, updatedRemoved);
 }
 
-// Quick select chips listener
+function restoreItem(id) {
+  const itemToRestore = removedItems.find((item) => item.id === id);
+  if (!itemToRestore) return;
+
+  const updatedRemoved = removedItems.filter((item) => item.id !== id);
+  const updatedActive = [...currentItems, itemToRestore];
+
+  updateItemsAndSync(updatedActive, updatedRemoved);
+}
+
+// Quick select chips
 quickCategoriesGrid.addEventListener("click", (e) => {
   if (e.target.classList.contains("chip-btn")) {
     const selectedCat = e.target.getAttribute("data-cat") || e.target.textContent;
@@ -202,7 +275,7 @@ quickCategoriesGrid.addEventListener("click", (e) => {
   }
 });
 
-// Add custom chip button listener
+// Custom chip add
 addChipBtn.addEventListener("click", () => {
   const newChipText = customChipInput.value.trim();
   if (!newChipText) return;
@@ -216,30 +289,42 @@ addChipBtn.addEventListener("click", () => {
   customChipInput.value = "";
 });
 
-// Undo / Redo Actions
+// Undo / Redo
 undoBtn.addEventListener("click", () => {
   if (undoStack.length === 0) return;
-  redoStack.push(JSON.parse(JSON.stringify(currentItems)));
-  currentItems = undoStack.pop();
-  syncToFirebase(currentItems);
+  redoStack.push({
+    items: JSON.parse(JSON.stringify(currentItems)),
+    removed: JSON.parse(JSON.stringify(removedItems))
+  });
+  const previousState = undoStack.pop();
+  currentItems = previousState.items;
+  removedItems = previousState.removed;
+  syncToFirebase(currentItems, removedItems);
 });
 
 redoBtn.addEventListener("click", () => {
   if (redoStack.length === 0) return;
-  undoStack.push(JSON.parse(JSON.stringify(currentItems)));
-  currentItems = redoStack.pop();
-  syncToFirebase(currentItems);
+  undoStack.push({
+    items: JSON.parse(JSON.stringify(currentItems)),
+    removed: JSON.parse(JSON.stringify(removedItems))
+  });
+  const nextState = redoStack.pop();
+  currentItems = nextState.items;
+  removedItems = nextState.removed;
+  syncToFirebase(currentItems, removedItems);
 });
 
 // ==========================================
-// 7. RENDERING LOGIC
+// 8. RENDERING LOGIC
 // ==========================================
 function renderList() {
   groceryList.innerHTML = "";
+  removedList.innerHTML = "";
 
-  const activeItems = currentItems.filter((i) => !i.completed);
-  activeCount.textContent = activeItems.length;
+  activeCount.textContent = currentItems.length;
+  removedCount.textContent = removedItems.length;
 
+  // Render Active Items
   const filteredItems = currentItems.filter((item) => {
     if (activeFilter === "All") return true;
     return item.category === activeFilter;
@@ -247,10 +332,10 @@ function renderList() {
 
   filteredItems.forEach((item) => {
     const li = document.createElement("li");
-    if (item.completed) li.classList.add("completed");
 
-    const contentDiv = document.createElement("div");
-    
+    const leftDiv = document.createElement("div");
+    leftDiv.className = "item-left";
+
     const textSpan = document.createElement("span");
     textSpan.className = "item-text";
     textSpan.textContent = item.name;
@@ -259,21 +344,46 @@ function renderList() {
     catSpan.className = "item-cat-tag";
     catSpan.textContent = item.category;
 
-    contentDiv.appendChild(textSpan);
-    contentDiv.appendChild(catSpan);
-    contentDiv.addEventListener("click", () => toggleItem(item.id));
+    leftDiv.appendChild(textSpan);
+    leftDiv.appendChild(catSpan);
 
     const deleteBtn = document.createElement("button");
     deleteBtn.textContent = "✕";
     deleteBtn.className = "delete-btn";
-    deleteBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      removeItem(item.id);
-    });
+    deleteBtn.title = "Remove Item";
+    deleteBtn.addEventListener("click", () => removeItem(item.id));
 
-    li.appendChild(contentDiv);
+    li.appendChild(leftDiv);
     li.appendChild(deleteBtn);
     groceryList.appendChild(li);
+  });
+
+  // Render Removed Items
+  removedItems.forEach((item) => {
+    const li = document.createElement("li");
+
+    const leftDiv = document.createElement("div");
+    leftDiv.className = "item-left";
+
+    const textSpan = document.createElement("span");
+    textSpan.className = "item-text";
+    textSpan.textContent = item.name;
+
+    const catSpan = document.createElement("span");
+    catSpan.className = "item-cat-tag";
+    catSpan.textContent = item.category;
+
+    leftDiv.appendChild(textSpan);
+    leftDiv.appendChild(catSpan);
+
+    const restoreBtn = document.createElement("button");
+    restoreBtn.textContent = "↩ Restore";
+    restoreBtn.className = "restore-btn";
+    restoreBtn.addEventListener("click", () => restoreItem(item.id));
+
+    li.appendChild(leftDiv);
+    li.appendChild(restoreBtn);
+    removedList.appendChild(li);
   });
 }
 
@@ -294,7 +404,7 @@ function renderCategoryFilters() {
   });
 }
 
-// Auto-fill category when typing item name
+// Auto-fill category when typing
 itemInput.addEventListener("input", () => {
   const val = itemInput.value.trim().toLowerCase();
   if (categoryMap[val]) {
@@ -303,7 +413,7 @@ itemInput.addEventListener("input", () => {
 });
 
 // ==========================================
-// 8. EVENT LISTENERS & INITIALIZATION
+// 9. EVENT LISTENERS & INITIALIZATION
 // ==========================================
 addBtn.addEventListener("click", addItem);
 itemInput.addEventListener("keypress", (e) => {
