@@ -12,6 +12,26 @@
   --border-color: rgba(255,255,255,0.08);
   --success-color: #10b981;
   --danger-color: #ef4444;
+  --login-glow-a: #171a2c;
+  --login-glow-b: #0c0e17;
+}
+
+[data-theme="light"] {
+  --bg-main: #f4f5fa;
+  --panel-bg: #ffffff;
+  --card-bg: #f0f1f7;
+  --input-bg: #ffffff;
+  --text-main: #14161f;
+  --text-muted: #5c6178;
+  --accent-blue: #3d5fe0;
+  --accent-hover: #2f4bc4;
+  --chip-bg: #edeef6;
+  --chip-hover: #dde0f0;
+  --border-color: rgba(20,22,31,0.12);
+  --success-color: #059669;
+  --danger-color: #dc2626;
+  --login-glow-a: #eef0fb;
+  --login-glow-b: #f4f5fa;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -22,6 +42,12 @@ body {
   background: var(--bg-main);
   color: var(--text-main);
   min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sidebar, .panel-card, .stat-card, .list-row, .login-card, .chip-btn, .tab-pill,
+input, select, .category-chip {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 button { font-family: inherit; cursor: pointer; }
@@ -34,7 +60,7 @@ input, select { font-family: inherit; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at 30% 20%, #171a2c 0%, #0c0e17 60%);
+  background: radial-gradient(circle at 30% 20%, var(--login-glow-a) 0%, var(--login-glow-b) 60%);
   padding: 20px;
 }
 .login-card {
@@ -72,7 +98,7 @@ input, select { font-family: inherit; }
   color: var(--text-main);
   font-size: 0.95rem;
 }
-.login-card input::placeholder { color: #5b6280; }
+.login-card input::placeholder { color: var(--text-muted); }
 .login-card input:focus { border-color: var(--accent-blue); }
 .login-error {
   color: var(--danger-color);
@@ -232,7 +258,7 @@ input, select { font-family: inherit; }
 .chip-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .chip-btn.accent { background: var(--accent-blue); border-color: var(--accent-blue); }
 .chip-btn.accent:hover { background: var(--accent-hover); }
-.chip-btn.danger { background: rgba(239,68,68,0.12); color: #fca5a5; border-color: rgba(239,68,68,0.3); }
+.chip-btn.danger { background: rgba(239,68,68,0.12); color: var(--danger-color); border-color: rgba(239,68,68,0.3); }
 .chip-btn.danger:hover { background: rgba(239,68,68,0.22); }
 
 .stats-bar {
@@ -278,7 +304,8 @@ input, select { font-family: inherit; }
 .tab-pill.primary { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
 .tab-pill.primary.selected { background: var(--accent-hover); }
 .count-badge {
-  background: rgba(255,255,255,0.12);
+  background: var(--chip-hover);
+  color: var(--text-main);
   border-radius: 999px;
   font-size: 0.72rem;
   padding: 1px 8px;
@@ -311,7 +338,7 @@ input, select { font-family: inherit; }
   font-size: 0.92rem;
   margin-bottom: 6px;
 }
-.panel input::placeholder { color: #5b6280; }
+.panel input::placeholder { color: var(--text-muted); }
 .panel input:focus, .panel select:focus { border-color: var(--accent-blue); }
 .panel input.invalid { border-color: var(--danger-color); }
 
