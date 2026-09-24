@@ -4,6 +4,15 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Grocery List</title>
+<script>
+  // Runs before CSS/paint so the right theme is already applied on first render.
+  (function () {
+    try {
+      var saved = localStorage.getItem('groceryApp.theme');
+      if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+    } catch (e) { /* storage unavailable — default (dark) theme is fine */ }
+  })();
+</script>
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -47,7 +56,6 @@
       <div class="header-right">
         <span class="chip-btn">👤 ASWATHY</span>
         <button id="darkToggle" class="chip-btn">🌙 Dark</button>
-        <button id="shareBtn" class="chip-btn accent">🔗 Share</button>
         <button id="signOutBtn" class="chip-btn danger">Sign Out</button>
       </div>
     </header>
