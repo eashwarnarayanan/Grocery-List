@@ -71,8 +71,8 @@
      Data / persistence
      ============================================================ */
   const STORAGE_KEY = 'groceryApp.state.v1';
-  const LISTS = ['Grocery List', 'Costco List', 'Pantry Inventory', 'Recipe Planner'];
-  const LIST_ICONS = { 'Grocery List': '🛒', 'Costco List': '📦', 'Pantry Inventory': '🗄️', 'Recipe Planner': '📖' };
+  const LISTS = ['Grocery List', 'Costco List'];
+  const LIST_ICONS = { 'Grocery List': '🛒', 'Costco List': '📦' };
 
   const BUILT_IN_CATEGORIES = {
     '🥦 Produce': ['apple','apples','banana','bananas','berry','berries','spinach','lettuce','tomato','tomatoes','potato','potatoes','onion','onions','garlic','carrot','carrots','avocado','lemon','lime','cucumber','grape','grapes','broccoli','pepper','mushroom','ginger','fruit','vegetable'],
@@ -99,9 +99,14 @@
       if (!raw) return defaultState();
       const parsed = JSON.parse(raw);
       const fresh = defaultState();
+      const mergedListsData = {};
+      LISTS.forEach(name => {
+        const saved = parsed.listsData && parsed.listsData[name];
+        mergedListsData[name] = (saved && Array.isArray(saved.items)) ? saved : fresh.listsData[name];
+      });
       return {
         activeListName: parsed.activeListName && fresh.listsData[parsed.activeListName] ? parsed.activeListName : 'Grocery List',
-        listsData: parsed.listsData && typeof parsed.listsData === 'object' ? { ...fresh.listsData, ...parsed.listsData } : fresh.listsData,
+        listsData: mergedListsData,
         customChips: Array.isArray(parsed.customChips) ? parsed.customChips : [],
         learned: parsed.learned && typeof parsed.learned === 'object' ? parsed.learned : {}
       };
@@ -273,7 +278,6 @@
   const headerTitle = document.getElementById('headerTitle');
   const signOutBtn = document.getElementById('signOutBtn');
   const darkToggle = document.getElementById('darkToggle');
-  const shareBtn = document.getElementById('shareBtn');
 
   const statTotal = document.getElementById('statTotal');
   const statCompleted = document.getElementById('statCompleted');
@@ -339,8 +343,38 @@
 
   toggleBtn.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
 
-  darkToggle.addEventListener('click', () => showToast('This app is dark-themed only for now.'));
-  shareBtn.addEventListener('click', () => showToast('Sharing isn\'t hooked up in this build yet.'));
+  /* ============================================================
+     Theme (dark / light)
+     ============================================================ */
+  const THEME_KEY = 'groceryApp.theme';
+
+  function getStoredTheme() {
+    try { return localStorage.getItem(THEME_KEY); } catch (e) { return null; }
+  }
+  function setStoredTheme(value) {
+    try { localStorage.setItem(THEME_KEY, value); } catch (e) { /* ignore — storage unavailable */ }
+  }
+  function currentTheme() {
+    return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  }
+  function applyTheme(theme) {
+    if (theme === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+    darkToggle.textContent = theme === 'light' ? '☀️ Light' : '🌙 Dark';
+  }
+  function toggleTheme() {
+    const next = currentTheme() === 'light' ? 'dark' : 'light';
+    applyTheme(next);
+    setStoredTheme(next);
+  }
+
+  // The inline script in <head> already set data-theme on <html> before paint
+  // (to avoid a flash), so this just syncs the button label to match.
+  applyTheme(currentTheme());
+  darkToggle.addEventListener('click', toggleTheme);
 
   signOutBtn.addEventListener('click', () => {
     isAuthed = false;
