@@ -22,7 +22,7 @@
 <div id="login-screen" class="screen">
   <form id="login-form" class="login-card">
     <div class="login-brand">🛒 Grocery List</div>
-    <p class="login-sub">Sign in to manage your list</p>
+    <p class="login-sub">Sign in to manage your smart grocery list</p>
 
     <label for="login-username">Username</label>
     <input id="login-username" type="text" autocomplete="username" placeholder="Username" />
@@ -42,83 +42,55 @@
   <aside class="sidebar">
     <div class="sidebar-brand">🛒 Smart List</div>
     <nav id="listNav" class="list-nav"></nav>
-    <div class="sidebar-user">👤 ASWATHY</div>
   </aside>
 
   <main class="main">
     <header class="page-header">
       <div>
-        <h1 id="pageTitle">Grocery List</h1>
-        <p id="pageSummary" class="page-summary"></p>
+        <h1 id="pageTitle">Grocery List <span class="live-badge">LIVE</span></h1>
+        <p class="page-subtitle">Smart Auto-Categorised Shopping Assistant</p>
       </div>
       <div class="header-actions">
-        <button id="themeBtn" class="btn btn-ghost" type="button">🌙 Dark</button>
-        <button id="signOutBtn" class="btn btn-ghost" type="button">Sign out</button>
+        <span class="chip">👤 ASWATHY</span>
+        <button id="themeBtn" class="chip chip-btn" type="button">🌙 Dark</button>
+        <button id="signOutBtn" class="chip chip-btn danger" type="button">Sign Out</button>
       </div>
     </header>
 
-    <nav class="view-tabs">
-      <button class="view-tab" data-view="list" id="tabList">List <span class="count" id="countActive">0</span></button>
-      <button class="view-tab" data-view="add" id="tabAdd">Add item</button>
-      <button class="view-tab" data-view="removed" id="tabRemoved">Removed <span class="count" id="countRemoved">0</span></button>
+    <nav class="tabs-row">
+      <button class="pill" id="tabList" type="button">Active List <span class="count" id="countActive">0</span></button>
+      <button class="pill pill-primary" id="toggleAddBtn" type="button">+ Add Item</button>
+      <button class="pill" id="tabRemoved" type="button">Removed <span class="count" id="countRemoved">0</span></button>
       <div class="tab-spacer"></div>
-      <button id="undoBtn" class="btn btn-icon" type="button" title="Undo" disabled>↩</button>
-      <button id="redoBtn" class="btn btn-icon" type="button" title="Redo" disabled>↪</button>
+      <button id="undoBtn" class="pill" type="button" disabled>↩ Undo</button>
+      <button id="redoBtn" class="pill" type="button" disabled>↪ Redo</button>
     </nav>
 
     <section class="card">
 
-      <!-- Add item -->
-      <div id="view-add" class="view">
-        <form id="addForm" class="add-form">
-          <div class="field">
-            <label for="itemName">Item</label>
-            <input id="itemName" type="text" placeholder="e.g. Milk, Puff pastry, Tortilla chips" autocomplete="off" />
+      <!-- Add item panel (toggled by the "+ Add Item" pill; sits above the list) -->
+      <div id="addPanel" class="add-panel">
+        <h3>Add New Grocery Item</h3>
+        <form id="addForm">
+          <label for="itemName">Item Name</label>
+          <input id="itemName" type="text" placeholder="e.g. Puff pastry, Apples, Milk..." autocomplete="off" />
+
+          <label for="categoryInput">Category (auto-detected or custom)</label>
+          <input id="categoryInput" type="text" placeholder="e.g. 🍞 Bakery" autocomplete="off" />
+          <p class="hint">💡 Quick select or type a custom category to teach the app!</p>
+
+          <label>Quick Categories</label>
+          <div id="quickCategories" class="chip-grid"></div>
+
+          <label for="customChipInput">Add Custom Category Chip</label>
+          <div class="inline-row">
+            <input id="customChipInput" type="text" placeholder="e.g. 🐾 Pet Supplies" />
+            <button type="button" id="addChipBtn" class="btn">Add</button>
           </div>
-          <div class="field">
-            <label for="categoryInput">Category</label>
-            <input id="categoryInput" list="categoryOptions" type="text" placeholder="Start typing or pick a category" autocomplete="off" />
-            <datalist id="categoryOptions"></datalist>
-            <p id="suggestionHint" class="hint" hidden></p>
-          </div>
+
           <div class="field-row">
-            <div class="field field-small">
-              <label for="quantityInput">Qty</label>
+            <div class="field-small">
+              <label for="quantityInput">Quantity</label>
               <input id="quantityInput" type="number" min="1" value="1" />
             </div>
-            <div class="field field-small">
-              <label for="unitInput">Unit</label>
-              <select id="unitInput">
-                <option value="pcs">pcs</option>
-                <option value="kg">kg</option>
-                <option value="g">g</option>
-                <option value="l">l</option>
-                <option value="ml">ml</option>
-                <option value="pack">pack</option>
-              </select>
-            </div>
-          </div>
-          <button type="submit" class="btn btn-primary btn-block">Add to list</button>
-        </form>
-      </div>
-
-      <!-- Active list -->
-      <div id="view-list" class="view">
-        <input id="searchInput" type="text" class="search-input" placeholder="Search this list…" />
-        <div id="listGroups" class="groups"></div>
-      </div>
-
-      <!-- Removed items -->
-      <div id="view-removed" class="view">
-        <div id="removedGroups" class="groups"></div>
-      </div>
-
-    </section>
-  </main>
-</div>
-
-<div id="toast" class="toast" hidden></div>
-
-<script src="script.js"></script>
-</body>
-</html>
+            <div
