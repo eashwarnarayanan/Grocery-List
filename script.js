@@ -316,8 +316,10 @@
     syncAddPanelVisibility();
   }
 
-  function syncAddPanelVisibility() {
+   function syncAddPanelVisibility() {
     addPanel.classList.toggle('open', currentView === 'list' && addPanelOpen);
+    // Hide list view when add panel is open
+    viewList.classList.toggle('active', currentView === 'list' && !addPanelOpen);
   }
 
   tabList.addEventListener('click', () => setView('list'));
