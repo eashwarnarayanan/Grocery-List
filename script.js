@@ -8,8 +8,8 @@
     projectId: "grocery-list-5533e",
     storageBucket: "grocery-list-5533e.firebasestorage.app",
     messagingSenderId: "429534628995",
-    appId: "1:429534628995:web:767785da715af59f9edfb6",
-    measurementId: "G-E7DTWVW0DE"
+    appId: "1:429534628995:web:378fa6fef54b1a19edfb6",
+    measurementId: "G-3DVDFBBML"
   };
 
   let firebaseDb = null;
@@ -311,20 +311,18 @@
     currentView = view;
     tabList.classList.toggle('selected', view === 'list');
     tabRemoved.classList.toggle('selected', view === 'removed');
-    viewList.classList.toggle('active', view === 'list');
-    viewRemoved.classList.toggle('active', view === 'removed');
     syncAddPanelVisibility();
   }
 
-   function syncAddPanelVisibility() {
+  function syncAddPanelVisibility() {
     addPanel.classList.toggle('open', currentView === 'list' && addPanelOpen);
-    // Hide list view when add panel is open
-    viewList.classList.toggle('active', currentView === 'list' && !addPanelOpen);
+    viewList.classList.toggle('active', currentView === 'list');
+    viewRemoved.classList.toggle('active', currentView === 'removed');
   }
 
   tabList.addEventListener('click', () => {
     setView('list');
-    addPanelOpen = false;  // Close add panel when viewing list
+    addPanelOpen = false;
     syncAddPanelVisibility();
   });
   tabRemoved.addEventListener('click', () => setView('removed'));
@@ -334,7 +332,7 @@
     if (addPanelOpen) itemName.focus();
     syncAddPanelVisibility();
   });
-  
+
   function renderQuickCategories() {
     quickCategories.innerHTML = '';
     allChipCategories().forEach(cat => {
