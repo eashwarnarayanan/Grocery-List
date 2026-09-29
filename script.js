@@ -322,14 +322,19 @@
     viewList.classList.toggle('active', currentView === 'list' && !addPanelOpen);
   }
 
-  tabList.addEventListener('click', () => setView('list'));
+  tabList.addEventListener('click', () => {
+    setView('list');
+    addPanelOpen = false;  // Close add panel when viewing list
+    syncAddPanelVisibility();
+  });
   tabRemoved.addEventListener('click', () => setView('removed'));
   toggleAddBtn.addEventListener('click', () => {
     addPanelOpen = !addPanelOpen;
     setView('list');
     if (addPanelOpen) itemName.focus();
+    syncAddPanelVisibility();
   });
-
+  
   function renderQuickCategories() {
     quickCategories.innerHTML = '';
     allChipCategories().forEach(cat => {
