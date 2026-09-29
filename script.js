@@ -8,8 +8,8 @@
     projectId: "grocery-list-5533e",
     storageBucket: "grocery-list-5533e.firebasestorage.app",
     messagingSenderId: "429534628995",
-    appId: "1:429534628995:web:542e846166539d3f9edfb6",
-    measurementId: "G-B6D7QMVHMJ"
+    appId: "1:429534628995:web:767785da715af59f9edfb6",
+    measurementId: "G-E7DTWVW0DE"
   };
 
   let firebaseDb = null;
