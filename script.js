@@ -1,95 +1,107 @@
 (() => {
   'use strict';
 
-  /* =========================================================
-     Storage helpers — never let a blocked/throwing storage API
-     break the app.
-     ========================================================= */
-  function safeGet(store, key) {
-    try { return store.getItem(key); } catch (e) { return null; }
-  }
-  function safeSet(store, key, value) {
-    try { store.setItem(key, value); } catch (e) { /* ignore */ }
-  }
-  function safeRemove(store, key) {
-    try { store.removeItem(key); } catch (e) { /* ignore */ }
+  const firebaseConfig = {
+    apiKey: "AIzaSyC7H4Z4SHfPfaZXJdMeAKG9szDg2KUdBpo",
+    authDomain: "grocery-list-5533e.firebaseapp.com",
+    databaseURL: "https://grocery-list-5533e-default-rtdb.firebaseio.com",
+    projectId: "grocery-list-5533e",
+    storageBucket: "grocery-list-5533e.firebasestorage.app",
+    messagingSenderId: "429534628995",
+    appId: "1:429534628995:web:542e846166539d3f9edfb6",
+    measurementId: "G-B6D7QMVHMJ"
+  };
+
+  let firebaseDb = null;
+  let firebaseListener = null;
+
+  if (window.firebase) {
+    const app = window.firebase.initializeApp(firebaseConfig);
+    firebaseDb = window.firebase.database(app);
   }
 
-  /* =========================================================
-     Auth
-     ========================================================= */
+  function safeGet(store, key) { try { return store.getItem(key); } catch (e) { return null; } }
+  function safeSet(store, key, value) { try { store.setItem(key, value); } catch (e) { } }
+  function safeRemove(store, key) { try { store.removeItem(key); } catch (e) { } }
+
   const CREDENTIALS = { username: 'ASWATHY', password: 'HARI' };
-  const AUTH_KEY = 'grocery.authed';
+  const AUTH_KEY = 'grocery.authed.user';
 
-  const loginScreen = document.getElementById('login-screen');
-  const appRoot = document.getElementById('app');
-  const loginForm = document.getElementById('login-form');
-  const loginUsername = document.getElementById('login-username');
-  const loginPassword = document.getElementById('login-password');
-  const loginError = document.getElementById('login-error');
+  const loginScreen = document.getElementById('loginScreen');
+  const appRoot = document.getElementById('appRoot');
+  const loginForm = document.getElementById('loginForm');
+  const loginUsername = document.getElementById('loginUsername');
+  const loginPassword = document.getElementById('loginPassword');
+  const loginError = document.getElementById('loginError');
+  const signOutBtn = document.getElementById('signOutBtn');
 
-  let isAuthed = safeGet(sessionStorage, AUTH_KEY) === '1';
+  let currentUser = null;
 
-  function showApp() { loginScreen.hidden = true; appRoot.hidden = false; }
+  function showApp() { loginScreen.style.display = 'none'; appRoot.style.display = 'flex'; }
   function showLogin() {
-    appRoot.hidden = true;
-    loginScreen.hidden = false;
+    appRoot.style.display = 'none';
+    loginScreen.style.display = 'flex';
     loginUsername.value = '';
     loginPassword.value = '';
-    loginError.hidden = true;
+    loginError.style.display = 'none';
     loginUsername.focus();
   }
 
-  loginForm.addEventListener('submit', e => {
+  loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const ok = loginUsername.value.trim() === CREDENTIALS.username && loginPassword.value === CREDENTIALS.password;
-    if (ok) {
-      isAuthed = true;
-      safeSet(sessionStorage, AUTH_KEY, '1');
+    const user = loginUsername.value.trim();
+    const pass = loginPassword.value;
+
+    if (user === CREDENTIALS.username && pass === CREDENTIALS.password) {
+      currentUser = user;
+      safeSet(localStorage, AUTH_KEY, user);
       showApp();
       init();
     } else {
-      loginError.hidden = false;
+      loginError.style.display = 'block';
       loginPassword.value = '';
       loginPassword.focus();
     }
   });
 
-  isAuthed ? showApp() : showLogin();
+  signOutBtn.addEventListener('click', () => {
+    currentUser = null;
+    safeRemove(localStorage, AUTH_KEY);
+    clearAllTimers();
+    if (firebaseListener) firebaseListener();
+    showLogin();
+  });
 
-  /* =========================================================
-     Theme
-     ========================================================= */
+  const savedUser = safeGet(localStorage, AUTH_KEY);
+  if (savedUser === CREDENTIALS.username) {
+    currentUser = savedUser;
+    showApp();
+  } else {
+    showLogin();
+  }
+
   const THEME_KEY = 'grocery.theme';
   const themeBtn = document.getElementById('themeBtn');
 
-  function currentTheme() {
-    return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
-  }
+  function currentTheme() { return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+
   function applyTheme(theme) {
-    if (theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
-    else document.documentElement.removeAttribute('data-theme');
+    if (theme === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
     themeBtn.textContent = theme === 'light' ? '☀️ Light' : '🌙 Dark';
   }
+
   themeBtn.addEventListener('click', () => {
     const next = currentTheme() === 'light' ? 'dark' : 'light';
     applyTheme(next);
     safeSet(localStorage, THEME_KEY, next);
   });
-  applyTheme(currentTheme()); // <head> script already set the attribute pre-paint; this syncs the label
 
-  const signOutBtn = document.getElementById('signOutBtn');
-  signOutBtn.addEventListener('click', () => {
-    isAuthed = false;
-    safeRemove(sessionStorage, AUTH_KEY);
-    clearAllTimers();
-    showLogin();
-  });
+  applyTheme(currentTheme());
 
-  /* =========================================================
-     Data model + persistence
-     ========================================================= */
-  const STORAGE_KEY = 'grocery.state.v3';
   const LISTS = ['Grocery List', 'Costco List'];
   const LIST_ICONS = { 'Grocery List': '🛒', 'Costco List': '📦' };
 
@@ -112,9 +124,13 @@
     return { activeList: 'Grocery List', listsData, customChips: [], learned: {} };
   }
 
-  function loadState() {
+  let state = emptyState();
+
+  function saveStateLocal() { safeSet(localStorage, `grocery.state.${currentUser}`, JSON.stringify(state)); }
+
+  function loadStateLocal() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = safeGet(localStorage, `grocery.state.${currentUser}`);
       if (!raw) return emptyState();
       const parsed = JSON.parse(raw);
       const fresh = emptyState();
@@ -130,29 +146,26 @@
         learned: (parsed.learned && typeof parsed.learned === 'object') ? parsed.learned : {}
       };
     } catch (e) {
-      console.warn('Could not read saved data — starting fresh.', e);
       return emptyState();
     }
   }
 
-  let state = loadState();
-  function saveState() { safeSet(localStorage, STORAGE_KEY, JSON.stringify(state)); }
+  function syncStateToFirebase() {
+    if (!firebaseDb || !currentUser) return;
+    firebaseDb.ref(`users/${currentUser}/state`).set(state).catch(err => console.error('Firebase sync error:', err));
+  }
+
   function activeItems() { return state.listsData[state.activeList].items; }
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
-  /* =========================================================
-     Category suggestion + learning
-     ========================================================= */
   function suggestCategory(rawName) {
     const q = rawName.trim().toLowerCase();
     if (!q) return null;
-
     let best = null, bestLen = 0;
     for (const key in state.learned) {
       if (q.includes(key) && key.length > bestLen) { best = state.learned[key]; bestLen = key.length; }
     }
     if (best) return best;
-
     for (const [category, keywords] of Object.entries(BUILT_IN_CATEGORIES)) {
       for (const kw of keywords) {
         if (q.includes(kw) && kw.length > bestLen) { best = category; bestLen = kw.length; }
@@ -161,18 +174,9 @@
     return best;
   }
 
-  function learn(name, category) {
-    const key = name.trim().toLowerCase();
-    if (key && category) state.learned[key] = category;
-  }
+  function learn(name, category) { const key = name.trim().toLowerCase(); if (key && category) state.learned[key] = category; }
+  function allChipCategories() { return [...Object.keys(BUILT_IN_CATEGORIES), ...state.customChips]; }
 
-  function allChipCategories() {
-    return [...Object.keys(BUILT_IN_CATEGORIES), ...state.customChips];
-  }
-
-  /* =========================================================
-     Undo / redo (snapshots the list data only)
-     ========================================================= */
   const undoStack = [];
   const redoStack = [];
   const MAX_HISTORY = 50;
@@ -192,7 +196,8 @@
     state.listsData = JSON.parse(undoStack.pop());
     clearAllTimers();
     resumeTimers();
-    saveState();
+    saveStateLocal();
+    syncStateToFirebase();
     renderAll();
   }
   function redo() {
@@ -201,28 +206,23 @@
     state.listsData = JSON.parse(redoStack.pop());
     clearAllTimers();
     resumeTimers();
-    saveState();
+    saveStateLocal();
+    syncStateToFirebase();
     renderAll();
   }
   function syncUndoRedoButtons() {
     undoBtn.disabled = undoStack.length === 0;
     redoBtn.disabled = redoStack.length === 0;
   }
+
   undoBtn.addEventListener('click', undo);
   redoBtn.addEventListener('click', redo);
 
-  /* =========================================================
-     Purchased-item countdown (independent per item, survives refresh)
-     ========================================================= */
   const REMOVAL_MS = 60 * 1000;
   const timers = new Map();
 
-  function clearTimer(id) {
-    const h = timers.get(id);
-    if (h) { clearTimeout(h); timers.delete(id); }
-  }
+  function clearTimer(id) { const h = timers.get(id); if (h) { clearTimeout(h); timers.delete(id); } }
   function clearAllTimers() { timers.forEach(h => clearTimeout(h)); timers.clear(); }
-
   function findItem(id) {
     for (const listName of LISTS) {
       const item = state.listsData[listName].items.find(i => i.id === id);
@@ -230,7 +230,6 @@
     }
     return null;
   }
-
   function scheduleRemoval(item) {
     clearTimer(item.id);
     if (!item.purchased || !item.purchasedAt || item.removed) return;
@@ -238,41 +237,34 @@
     if (remaining <= 0) { finalizeRemoval(item.id); return; }
     timers.set(item.id, setTimeout(() => finalizeRemoval(item.id), remaining));
   }
-
   function finalizeRemoval(id) {
     clearTimer(id);
     const item = findItem(id);
     if (!item || item.removed) return;
     pushUndo();
     item.removed = true;
-    saveState();
+    saveStateLocal();
+    syncStateToFirebase();
     renderAll();
   }
-
   function resumeTimers() {
     LISTS.forEach(name => {
       state.listsData[name].items.forEach(item => {
-        if (item.purchased && item.purchasedAt && !item.removed) scheduleRemoval(item);
+        if (item.purchased && item.purchasedAt && !item.removed) { scheduleRemoval(item); }
       });
     });
   }
 
-  /* =========================================================
-     DOM references
-     ========================================================= */
   const listNav = document.getElementById('listNav');
   const pageTitle = document.getElementById('pageTitle');
-
   const tabList = document.getElementById('tabList');
   const tabRemoved = document.getElementById('tabRemoved');
   const toggleAddBtn = document.getElementById('toggleAddBtn');
   const countActive = document.getElementById('countActive');
   const countRemoved = document.getElementById('countRemoved');
-
-  const viewList = document.getElementById('view-list');
-  const viewRemoved = document.getElementById('view-removed');
+  const viewList = document.getElementById('viewList');
+  const viewRemoved = document.getElementById('viewRemoved');
   const addPanel = document.getElementById('addPanel');
-
   const addForm = document.getElementById('addForm');
   const itemName = document.getElementById('itemName');
   const categoryInput = document.getElementById('categoryInput');
@@ -281,27 +273,23 @@
   const addChipBtn = document.getElementById('addChipBtn');
   const quantityInput = document.getElementById('quantityInput');
   const unitInput = document.getElementById('unitInput');
-
   const searchInput = document.getElementById('searchInput');
   const listGroups = document.getElementById('listGroups');
   const removedGroups = document.getElementById('removedGroups');
-
   const toastEl = document.getElementById('toast');
+
   let toastTimer = null;
   function showToast(msg) {
     toastEl.textContent = msg;
-    toastEl.hidden = false;
+    toastEl.style.display = 'block';
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { toastEl.hidden = true; }, 2200);
+    toastTimer = setTimeout(() => { toastEl.style.display = 'none'; }, 2200);
   }
 
-  let currentView = 'list';   // 'list' | 'removed'
-  let addPanelOpen = true;    // the "+ Add Item" panel starts open
+  let currentView = 'list';
+  let addPanelOpen = true;
   let categoryEditedByUser = false;
 
-  /* =========================================================
-     Sidebar (list switcher) — exactly the two lists, nothing else
-     ========================================================= */
   function renderSidebar() {
     listNav.innerHTML = '';
     LISTS.forEach(name => {
@@ -311,16 +299,14 @@
       btn.innerHTML = `<span>${LIST_ICONS[name]}</span><span>${escapeHtml(name)}</span>`;
       btn.addEventListener('click', () => {
         state.activeList = name;
-        saveState();
+        saveStateLocal();
+        syncStateToFirebase();
         renderAll();
       });
       listNav.appendChild(btn);
     });
   }
 
-  /* =========================================================
-     Tabs + the toggleable Add-Item panel
-     ========================================================= */
   function setView(view) {
     currentView = view;
     tabList.classList.toggle('selected', view === 'list');
@@ -329,6 +315,7 @@
     viewRemoved.classList.toggle('active', view === 'removed');
     syncAddPanelVisibility();
   }
+
   function syncAddPanelVisibility() {
     addPanel.classList.toggle('open', currentView === 'list' && addPanelOpen);
   }
@@ -341,9 +328,6 @@
     if (addPanelOpen) itemName.focus();
   });
 
-  /* =========================================================
-     Add-item form: category chips + suggestion + learning
-     ========================================================= */
   function renderQuickCategories() {
     quickCategories.innerHTML = '';
     allChipCategories().forEach(cat => {
@@ -366,16 +350,16 @@
     if (!val) return;
     if (!allChipCategories().includes(val)) {
       state.customChips.push(val);
-      saveState();
+      saveStateLocal();
+      syncStateToFirebase();
     }
     customChipInput.value = '';
     categoryInput.value = val;
     categoryEditedByUser = true;
     renderQuickCategories();
   });
-  customChipInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); addChipBtn.click(); }
-  });
+
+  customChipInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addChipBtn.click(); } });
 
   itemName.addEventListener('input', () => {
     if (categoryEditedByUser) return;
@@ -386,10 +370,7 @@
     }
   });
 
-  categoryInput.addEventListener('input', () => {
-    categoryEditedByUser = true;
-    renderQuickCategories();
-  });
+  categoryInput.addEventListener('input', () => { categoryEditedByUser = true; renderQuickCategories(); });
 
   addForm.addEventListener('submit', e => {
     e.preventDefault();
@@ -406,11 +387,19 @@
 
     pushUndo();
     activeItems().push({
-      id: uid(), name, category, quantity: qty, unit,
-      purchased: false, purchasedAt: null, removed: false, createdAt: Date.now()
+      id: uid(),
+      name,
+      category,
+      quantity: qty,
+      unit,
+      purchased: false,
+      purchasedAt: null,
+      removed: false,
+      createdAt: Date.now()
     });
     learn(name, category);
-    saveState();
+    saveStateLocal();
+    syncStateToFirebase();
 
     itemName.value = '';
     categoryInput.value = '';
@@ -421,25 +410,14 @@
     itemName.focus();
   });
 
-  /* =========================================================
-     Rendering: active list + removed list
-     ========================================================= */
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
+  function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
   function buildRow(item, { removedView }) {
     const row = document.createElement('div');
     row.className = 'row' + (item.purchased ? ' purchased' : '');
     row.dataset.id = item.id;
 
-    const checkboxHtml = removedView ? '' : `
-      <label class="checkbox">
-        <input type="checkbox" data-action="toggle" ${item.purchased ? 'checked' : ''} />
-        <span class="checkmark"></span>
-      </label>`;
+    const checkboxHtml = removedView ? '' : `<label class="checkbox"><input type="checkbox" data-action="toggle" ${item.purchased ? 'checked' : ''} /><span class="checkmark"></span></label>`;
 
     let timerHtml = '';
     if (item.purchased && item.purchasedAt && !item.removed) {
@@ -452,16 +430,7 @@
       ? `<button type="button" class="row-action restore" data-action="restore" title="Restore">↺</button>`
       : `<button type="button" class="row-action" data-action="delete" title="Remove">🗑</button>`;
 
-    row.innerHTML = `
-      ${checkboxHtml}
-      <div class="row-info">
-        <span class="row-name">${escapeHtml(item.name)}</span>
-        <span class="row-meta">${item.quantity} ${escapeHtml(item.unit)}</span>
-        <span class="row-meta">${escapeHtml(item.category)}</span>
-        ${timerHtml}
-      </div>
-      ${actionHtml}
-    `;
+    row.innerHTML = `${checkboxHtml}<div class="row-info"><span class="row-name">${escapeHtml(item.name)}</span><span class="row-meta">${item.quantity} ${escapeHtml(item.unit)}</span><span class="row-meta">${escapeHtml(item.category)}</span>${timerHtml}</div>${actionHtml}`;
     return row;
   }
 
@@ -490,8 +459,7 @@
       title.textContent = cat;
       const rows = document.createElement('div');
       rows.className = 'rows';
-      groups[cat]
-        .sort((a, b) => (a.purchased === b.purchased) ? a.createdAt - b.createdAt : (a.purchased ? 1 : -1))
+      groups[cat].sort((a, b) => a.purchased === b.purchased ? a.createdAt - b.createdAt : a.purchased ? 1 : -1)
         .forEach(item => rows.appendChild(buildRow(item, { removedView: false })));
       section.append(title, rows);
       listGroups.appendChild(section);
@@ -507,9 +475,7 @@
     }
     const rows = document.createElement('div');
     rows.className = 'rows';
-    items
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .forEach(item => rows.appendChild(buildRow(item, { removedView: true })));
+    items.sort((a, b) => b.createdAt - a.createdAt).forEach(item => rows.appendChild(buildRow(item, { removedView: true })));
     removedGroups.appendChild(rows);
   }
 
@@ -523,13 +489,15 @@
     item.purchased = e.target.checked;
     if (item.purchased) {
       item.purchasedAt = Date.now();
-      saveState();
+      saveStateLocal();
+      syncStateToFirebase();
       renderAll();
       scheduleRemoval(item);
     } else {
       item.purchasedAt = null;
       clearTimer(item.id);
-      saveState();
+      saveStateLocal();
+      syncStateToFirebase();
       renderAll();
     }
   });
@@ -543,7 +511,8 @@
     pushUndo();
     clearTimer(item.id);
     item.removed = true;
-    saveState();
+    saveStateLocal();
+    syncStateToFirebase();
     renderAll();
   });
 
@@ -558,13 +527,13 @@
     item.purchased = false;
     item.purchasedAt = null;
     clearTimer(item.id);
-    saveState();
+    saveStateLocal();
+    syncStateToFirebase();
     renderAll();
   });
 
   searchInput.addEventListener('input', renderList);
 
-  // Cosmetic per-second tick for visible countdowns — never touches state.
   setInterval(() => {
     document.querySelectorAll('.row-timer').forEach(el => {
       const secondsLeft = Math.max(0, Math.ceil((Number(el.dataset.expiresAt) - Date.now()) / 1000));
@@ -572,9 +541,6 @@
     });
   }, 1000);
 
-  /* =========================================================
-     Header + counts + top-level render
-     ========================================================= */
   function renderHeader() {
     pageTitle.innerHTML = `${escapeHtml(state.activeList)} <span class="live-badge">LIVE</span>`;
     const items = activeItems().filter(i => !i.removed);
@@ -592,17 +558,32 @@
     syncAddPanelVisibility();
   }
 
-  /* =========================================================
-     Init
-     ========================================================= */
+  function setupFirebaseSync() {
+    if (!firebaseDb || !currentUser) return;
+    if (firebaseListener) firebaseListener();
+    firebaseListener = firebaseDb.ref(`users/${currentUser}/state`).on('value', snapshot => {
+      if (snapshot.exists()) {
+        const remoteState = snapshot.val();
+        if (JSON.stringify(remoteState) !== JSON.stringify(state)) {
+          state = remoteState;
+          clearAllTimers();
+          resumeTimers();
+          renderAll();
+        }
+      }
+    });
+  }
+
   let started = false;
   function init() {
     if (started) return;
     started = true;
+    state = loadStateLocal();
+    setupFirebaseSync();
     resumeTimers();
     setView('list');
     renderAll();
   }
 
-  if (isAuthed) init();
+  if (currentUser) init();
 })();
