@@ -2,42 +2,41 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Grocery List</title>
 <script>
-  // Applied before CSS paints, so there's no flash of the wrong theme.
   (function () {
     try {
       if (localStorage.getItem('grocery.theme') === 'light') {
         document.documentElement.setAttribute('data-theme', 'light');
       }
-    } catch (e) { /* storage unavailable — dark default is fine */ }
+    } catch (e) { /* ignore */ }
   })();
 </script>
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<!-- ===== Login ===== -->
-<div id="login-screen" class="screen">
-  <form id="login-form" class="login-card">
+<!-- Login Screen -->
+<div id="loginScreen" class="screen" style="display: flex;">
+  <form id="loginForm" class="login-card">
     <div class="login-brand">🛒 Grocery List</div>
     <p class="login-sub">Sign in to manage your smart grocery list</p>
 
-    <label for="login-username">Username</label>
-    <input id="login-username" type="text" autocomplete="username" placeholder="Username" />
+    <label for="loginUsername">Username</label>
+    <input id="loginUsername" type="text" autocomplete="username" placeholder="Username" />
 
-    <label for="login-password">Password</label>
-    <input id="login-password" type="password" autocomplete="current-password" placeholder="Password" />
+    <label for="loginPassword">Password</label>
+    <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password" />
 
-    <p id="login-error" class="error-text" hidden>Incorrect username or password.</p>
+    <p id="loginError" class="error-text" style="display: none;">Incorrect username or password.</p>
 
     <button type="submit" class="btn btn-primary btn-block">Log in</button>
   </form>
 </div>
 
-<!-- ===== App ===== -->
-<div id="app" class="app" hidden>
+<!-- App -->
+<div id="appRoot" class="app" style="display: none;">
 
   <aside class="sidebar">
     <div class="sidebar-brand">🛒 Smart List</div>
@@ -58,7 +57,7 @@
     </header>
 
     <nav class="tabs-row">
-      <button class="pill" id="tabList" type="button">Active List <span class="count" id="countActive">0</span></button>
+      <button class="pill selected" id="tabList" type="button">Active List <span class="count" id="countActive">0</span></button>
       <button class="pill pill-primary" id="toggleAddBtn" type="button">+ Add Item</button>
       <button class="pill" id="tabRemoved" type="button">Removed <span class="count" id="countRemoved">0</span></button>
       <div class="tab-spacer"></div>
@@ -68,8 +67,8 @@
 
     <section class="card">
 
-      <!-- Add item panel (toggled by the "+ Add Item" pill; sits above the list) -->
-      <div id="addPanel" class="add-panel">
+      <!-- Add Item Panel -->
+      <div id="addPanel" class="add-panel open">
         <h3>Add New Grocery Item</h3>
         <form id="addForm">
           <label for="itemName">Item Name</label>
@@ -90,7 +89,47 @@
 
           <div class="field-row">
             <div class="field-small">
-              <label for="quantityInput">Quantity</label>
+              <label for="quantityInput">Qty</label>
               <input id="quantityInput" type="number" min="1" value="1" />
             </div>
-            <div
+            <div class="field-small">
+              <label for="unitInput">Unit</label>
+              <select id="unitInput">
+                <option value="pcs">pcs</option>
+                <option value="kg">kg</option>
+                <option value="g">g</option>
+                <option value="l">l</option>
+                <option value="ml">ml</option>
+                <option value="pack">pack</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">Add to list</button>
+        </form>
+      </div>
+
+      <!-- List View -->
+      <div id="viewList" class="view active">
+        <input id="searchInput" type="text" class="search-input" placeholder="Search this list…" />
+        <div id="listGroups" class="groups"></div>
+      </div>
+
+      <!-- Removed View -->
+      <div id="viewRemoved" class="view">
+        <div id="removedGroups" class="groups"></div>
+      </div>
+
+    </section>
+  </main>
+</div>
+
+<div id="toast" class="toast" style="display: none;"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
+
+<script src="script.js"></script>
+</body>
+</html>
