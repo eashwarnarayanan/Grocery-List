@@ -34,6 +34,7 @@
   const loginPassword = document.getElementById('loginPassword');
   const loginError = document.getElementById('loginError');
   const signOutBtn = document.getElementById('signOutBtn');
+  const usernameDisplay = document.getElementById('username');
 
   let currentUser = null;
 
@@ -54,6 +55,7 @@
 
     if (user === CREDENTIALS.username && pass === CREDENTIALS.password) {
       currentUser = user;
+      usernameDisplay.textContent = user;
       safeSet(localStorage, AUTH_KEY, user);
       showApp();
       init();
@@ -75,6 +77,7 @@
   const savedUser = safeGet(localStorage, AUTH_KEY);
   if (savedUser === CREDENTIALS.username) {
     currentUser = savedUser;
+    usernameDisplay.textContent = savedUser;
     showApp();
   } else {
     showLogin();
@@ -106,7 +109,7 @@
   const LIST_ICONS = { 'Grocery List': '🛒', 'Costco List': '📦' };
 
   const BUILT_IN_CATEGORIES = {
-    '🥦 Produce': ['apple','apples','banana','bananas','berry','berries','spinach','lettuce','tomato','tomatoes','potato','potatoes','onion','onions','garlic','carrot','carrots','avocado','lemon','lime','cucumber','grape','grapes','broccoli','pepper','mushroom','ginger','fruit','vegetable'],
+    '🥦 Produce': ['apple','apples','banana','bananas','berry','berries','spinach','lettuce','tomato','tomatoes','potato','potatoes','onion','onions','garlic','carrot','carrots','avocado','lemon','lime','cucumber','grape','grapes','broccoli','pepper','mushroom','ginger','fruit','vegetable','orange','oranges'],
     '🥛 Dairy': ['milk','cheese','butter','yogurt','yoghurt','cream','egg','eggs','paneer'],
     '🍞 Bakery': ['bread','puff pastry','croissant','bagel','bun','buns','muffin','cake','pita'],
     '🍗 Meat & Seafood': ['chicken','beef','pork','lamb','salmon','fish','shrimp','prawns','bacon','turkey','mince','steak'],
@@ -126,11 +129,11 @@
 
   let state = emptyState();
 
-  function saveStateLocal() { safeSet(localStorage, `grocery.state.${currentUser}`, JSON.stringify(state)); }
+  function saveStateLocal() { safeSet(localStorage, 'grocery.state', JSON.stringify(state)); }
 
   function loadStateLocal() {
     try {
-      const raw = safeGet(localStorage, `grocery.state.${currentUser}`);
+      const raw = safeGet(localStorage, 'grocery.state');
       if (!raw) return emptyState();
       const parsed = JSON.parse(raw);
       const fresh = emptyState();
@@ -151,8 +154,8 @@
   }
 
   function syncStateToFirebase() {
-    if (!firebaseDb || !currentUser) return;
-    firebaseDb.ref(`users/${currentUser}/state`).set(state).catch(err => console.error('Firebase sync error:', err));
+    if (!firebaseDb) return;
+    firebaseDb.ref('sharedGroceryList/state').set(state).catch(err => console.error('Firebase sync error:', err));
   }
 
   function activeItems() { return state.listsData[state.activeList].items; }
@@ -161,21 +164,39 @@
   function suggestCategory(rawName) {
     const q = rawName.trim().toLowerCase();
     if (!q) return null;
+    
     let best = null, bestLen = 0;
     for (const key in state.learned) {
-      if (q.includes(key) && key.length > bestLen) { best = state.learned[key]; bestLen = key.length; }
+      if (q.includes(key.toLowerCase()) && key.length > bestLen) { 
+        best = state.learned[key]; 
+        bestLen = key.length; 
+      }
     }
     if (best) return best;
+    
     for (const [category, keywords] of Object.entries(BUILT_IN_CATEGORIES)) {
       for (const kw of keywords) {
-        if (q.includes(kw) && kw.length > bestLen) { best = category; bestLen = kw.length; }
+        if (q.includes(kw) && kw.length > bestLen) { 
+          best = category; 
+          bestLen = kw.length; 
+        }
       }
     }
     return best;
   }
 
-  function learn(name, category) { const key = name.trim().toLowerCase(); if (key && category) state.learned[key] = category; }
-  function allChipCategories() { return [...Object.keys(BUILT_IN_CATEGORIES), ...state.customChips]; }
+  function learn(name, category) { 
+    const key = name.trim().toLowerCase(); 
+    if (key && category) {
+      state.learned[key] = category;
+      saveStateLocal();
+      syncStateToFirebase();
+    }
+  }
+
+  function allChipCategories() { 
+    return [...Object.keys(BUILT_IN_CATEGORIES), ...state.customChips]; 
+  }
 
   const undoStack = [];
   const redoStack = [];
@@ -268,6 +289,7 @@
   const addForm = document.getElementById('addForm');
   const itemName = document.getElementById('itemName');
   const categoryInput = document.getElementById('categoryInput');
+  const categoryHint = document.getElementById('categoryHint');
   const quickCategories = document.getElementById('quickCategories');
   const customChipInput = document.getElementById('customChipInput');
   const addChipBtn = document.getElementById('addChipBtn');
@@ -288,7 +310,6 @@
 
   let currentView = 'list';
   let addPanelOpen = true;
-  let categoryEditedByUser = false;
 
   function renderSidebar() {
     listNav.innerHTML = '';
@@ -343,7 +364,6 @@
       if (categoryInput.value.trim() === cat) btn.classList.add('chosen');
       btn.addEventListener('click', () => {
         categoryInput.value = cat;
-        categoryEditedByUser = true;
         renderQuickCategories();
       });
       quickCategories.appendChild(btn);
@@ -360,22 +380,24 @@
     }
     customChipInput.value = '';
     categoryInput.value = val;
-    categoryEditedByUser = true;
     renderQuickCategories();
   });
 
   customChipInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addChipBtn.click(); } });
 
   itemName.addEventListener('input', () => {
-    if (categoryEditedByUser) return;
     const suggestion = suggestCategory(itemName.value);
     if (suggestion) {
       categoryInput.value = suggestion;
-      renderQuickCategories();
+      categoryHint.textContent = '✓ Auto-detected from your item!';
+      categoryHint.style.color = 'var(--success)';
+    } else {
+      categoryInput.value = '';
+      categoryHint.textContent = 'Type item name above - category will auto-detect!';
+      categoryHint.style.color = 'var(--text-dim)';
     }
+    renderQuickCategories();
   });
-
-  categoryInput.addEventListener('input', () => { categoryEditedByUser = true; renderQuickCategories(); });
 
   addForm.addEventListener('submit', e => {
     e.preventDefault();
@@ -408,8 +430,9 @@
 
     itemName.value = '';
     categoryInput.value = '';
+    categoryHint.textContent = 'Type item name above - category will auto-detect!';
+    categoryHint.style.color = 'var(--text-dim)';
     quantityInput.value = '1';
-    categoryEditedByUser = false;
     renderAll();
     showToast(`Added "${name}" to ${category}`);
     itemName.focus();
@@ -564,9 +587,9 @@
   }
 
   function setupFirebaseSync() {
-    if (!firebaseDb || !currentUser) return;
+    if (!firebaseDb) return;
     if (firebaseListener) firebaseListener();
-    firebaseListener = firebaseDb.ref(`users/${currentUser}/state`).on('value', snapshot => {
+    firebaseListener = firebaseDb.ref('sharedGroceryList/state').on('value', snapshot => {
       if (snapshot.exists()) {
         const remoteState = snapshot.val();
         if (JSON.stringify(remoteState) !== JSON.stringify(state)) {
